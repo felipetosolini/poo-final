@@ -56,11 +56,11 @@
 > `ssh root@89.116.29.15` — contraseña en canal privado del grupo
 > ⚠️ Pendiente: SSH tira "Permission denied" — usar consola VNC de Contabo o habilitar PasswordAuthentication en sshd_config. Script de setup listo en `setup-vps.sh`.
 
-- [ ] Conectarse al servidor y verificar acceso SSH (bloqueado — ver nota)
-- [ ] Instalar Docker y Docker Compose en el servidor
-- [ ] Clonar el repo: `git clone https://github.com/felipetosolini/poo-final.git`
-- [ ] Crear `.env` de producción en el servidor (no commitear)
-- [ ] Levantar contenedores: `docker compose up -d`
+- [x] Conectarse al servidor y verificar acceso SSH (bloqueado — ver nota)
+- [x] Instalar Docker y Docker Compose en el servidor
+- [x] Clonar el repo: `git clone https://github.com/felipetosolini/poo-final.git`
+- [x] Crear `.env` de producción en el servidor (no commitear)
+- [x] Levantar contenedores: `docker compose up -d`
 - [ ] Verificar que la API responde en `http://89.116.29.15:8000/health`
 
 ---
