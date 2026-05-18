@@ -7,13 +7,13 @@
 
 ## Integrantes
 
-| Nombre | Área |
+| Nombre |
 |---|---|
-| Felipe Tosolini | Interfaz gráfica y tablero Qt |
-| Agustina Revuelta | Lógica del juego y modelado OO |
-| Ignacio Nievas | Backend, autenticación y base de datos |
-| Lautaro Robledo | Integración con Stockfish y análisis |
-| Facundo Toloza | IA, estadísticas y exportación PDF |
+| Felipe Tosolini |
+| Agustina Revuelta |
+| Ignacio Nievas |
+| Lautaro Robledo |
+| Facundo Toloza |
 
 ---
 
