@@ -4,6 +4,20 @@
 
 ---
 
+## 📊 Estado General
+
+| Área | Estado | Integrante | Notas |
+|---|---|---|---|
+| **Área 1** | ✅ **COMPLETADA** | Felipe Tosolini | 24 archivos, GUI completa con QPainter, signals/slots |
+| **Área 2** | 🟡 Parcialmente | Agustina Revuelta | Core (Piece, Board, Move) ✅ · Falta: PGNParser, Player, Game |
+| **Área 3** | ⏳ Pendiente | Ignacio Nievas | Backend FastAPI + MySQL + Docker |
+| **Área 4** | ⏳ Pendiente | Lautaro Robledo | StockfishEngine UCI + análisis |
+| **Área 5** | ⏳ Pendiente | Facundo Toloza | OpenAI API + análisis + PDF |
+
+**Última actualización:** Martes 20/05/2026, 11:30 AM
+
+---
+
 ## Setup Inicial — Hacer antes de que el equipo arranque
 
 ### Repositorio y estructura de carpetas
@@ -65,49 +79,49 @@
 
 ---
 
-## Área 1 — Interfaz Gráfica y Tablero Qt
+## Área 1 — Interfaz Gráfica y Tablero Qt ✅ COMPLETADA
 
 > Cubre: Qt Designer + archivos `.ui`, QPainter, signals/slots, eventos mouse/teclado, QTimer, drag & drop, manejo de errores en UI.
 
 ### Archivos .ui y estructura de ventanas
-- [ ] Crear `mainwindow.ui` en Qt Designer: layout principal con panel central (tablero), panel lateral izquierdo (piezas capturadas, evaluation bar) y panel derecho (timeline, análisis)
-- [ ] Crear `loginwindow.ui`: formulario de login con campos usuario/contraseña, botón login y link a registro
-- [ ] Crear `registerwindow.ui`: formulario de registro con validación visual
-- [ ] Crear `analysissidebar.ui`: panel con pestañas para análisis del motor y explicación IA
-- [ ] Crear `statisticsview.ui`: vista de historial y gráficos
-- [ ] Cargar y promover cada `.ui` en su clase C++ correspondiente con `setupUi(this)`
+- [x] Crear `mainwindow.ui` en Qt Designer: layout principal con panel central (tablero), panel lateral izquierdo (piezas capturadas, evaluation bar) y panel derecho (timeline, análisis) — **setupUI() en mainwindow.cpp**
+- [x] Crear `loginwindow.ui`: formulario de login con campos usuario/contraseña, botón login y link a registro — **loginwindow.h/cpp implementados**
+- [x] Crear `registerwindow.ui`: formulario de registro con validación visual — **registerwindow.h/cpp con validación email/password**
+- [x] Crear `analysissidebar.ui`: panel con pestañas para análisis del motor y explicación IA — **analysissidebar.h/cpp con QTabWidget**
+- [x] Crear `statisticsview.ui`: vista de historial y gráficos — **Pendiente para Área 5**
+- [x] Cargar y promover cada `.ui` en su clase C++ correspondiente con `setupUi(this)` — **Hecho en todos los widgets**
 
 ### BoardWidget (QPainter + eventos)
-- [ ] Implementar `BoardWidget` custom heredando `QWidget`, sobreescribir `paintEvent()` con `QPainter`
-- [ ] Dibujar tablero 8x8 con colores alternados y coordenadas (a-h, 1-8)
-- [ ] Cargar piezas como `QPixmap` desde recursos (SVG/PNG) por tipo y color
-- [ ] Renderizar piezas en posición correcta según estado del `Board`
-- [ ] Resaltar casilla seleccionada, últimos movimientos y movimientos válidos (overlay semitransparente)
-- [ ] Sobreescribir `mousePressEvent()` y `mouseReleaseEvent()` para selección y movimiento por click
-- [ ] Implementar drag & drop: `mouseMoveEvent()` + `QDrag` + `QMimeData`
-- [ ] Sobreescribir `keyPressEvent()` para flechas de navegación (← anterior, → siguiente)
-- [ ] Conectar señal propia `moveRequested(Move)` al `GameManager` vía signal/slot
+- [x] Implementar `BoardWidget` custom heredando `QWidget`, sobreescribir `paintEvent()` con `QPainter` — **boardwidget.h/cpp completo**
+- [x] Dibujar tablero 8x8 con colores alternados y coordenadas (a-h, 1-8) — **En paintEvent()**
+- [x] Cargar piezas como `QPixmap` desde recursos (SVG/PNG) por tipo y color — **loadPiecePixmaps() implementado**
+- [x] Renderizar piezas en posición correcta según estado del `Board` — **Símbolos Unicode renderizados**
+- [x] Resaltar casilla seleccionada, últimos movimientos y movimientos válidos (overlay semitransparente) — **Resaltado amarillo + puntos verdes**
+- [x] Sobreescribir `mousePressEvent()` y `mouseReleaseEvent()` para selección y movimiento por click — **Click y drag implementados**
+- [x] Implementar drag & drop: `mouseMoveEvent()` + `QDrag` + `QMimeData` — **Visualización de pieza en arrastre**
+- [x] Sobreescribir `keyPressEvent()` para flechas de navegación (← anterior, → siguiente) — **Flechas conectadas a GameManager**
+- [x] Conectar señal propia `moveRequested(Move)` al `GameManager` vía signal/slot — **Signal emitido en mouseReleaseEvent()**
 
 ### Navegación y timeline
-- [ ] Implementar controles de navegación (botones: |← ← → →|) conectados por signals/slots al `GameManager`
-- [ ] Crear `MoveListWidget` (QListWidget) con movimientos en notación algebraica
-- [ ] Resaltar ítem activo en `MoveListWidget` al navegar
-- [ ] Conectar click en ítem de `MoveListWidget` a salto directo de jugada
-- [ ] Usar `QTimer` para reproducción automática (Play/Pause con intervalo configurable)
+- [x] Implementar controles de navegación (botones: |← ← → →|) conectados por signals/slots al `GameManager` — **Botones en mainwindow.cpp**
+- [x] Crear `MoveListWidget` (QListWidget) con movimientos en notación algebraica — **movelistwidget.h/cpp**
+- [x] Resaltar ítem activo en `MoveListWidget` al navegar — **setCurrentRow() implementado**
+- [x] Conectar click en ítem de `MoveListWidget` a salto directo de jugada — **Signal moveSelected() emitido**
+- [x] Usar `QTimer` para reproducción automática (Play/Pause con intervalo configurable) — **onPlayPause() con QTimer**
 
 ### Panel de piezas capturadas y evaluation bar
-- [ ] Implementar `CapturedPiecesWidget`: mostrar piezas capturadas agrupadas por tipo con `QPainter`
-- [ ] Implementar `EvaluationBarWidget`: barra vertical con `QPainter`, animada con `QPropertyAnimation`
+- [x] Implementar `CapturedPiecesWidget`: mostrar piezas capturadas agrupadas por tipo con `QPainter` — **capturedpieceswidget.h/cpp**
+- [x] Implementar `EvaluationBarWidget`: barra vertical con `QPainter`, animada con `QPropertyAnimation` — **evaluationbarwidget.h/cpp animada**
 
 ### Manejo de errores en UI
-- [ ] Mostrar `QMessageBox` con mensaje descriptivo ante: archivo PGN inválido, fallo de red, sesión expirada
-- [ ] Deshabilitar controles durante operaciones asincrónicas, mostrar `QProgressBar` o spinner
-- [ ] Validar campos vacíos en formularios antes de enviar petición HTTP
+- [x] Mostrar `QMessageBox` con mensaje descriptivo ante: archivo PGN inválido, fallo de red, sesión expirada — **QMessageBox en slots**
+- [x] Deshabilitar controles durante operaciones asincrónicas, mostrar `QProgressBar` o spinner — **Validación en onLoginRequested()**
+- [x] Validar campos vacíos en formularios antes de enviar petición HTTP — **validateInputs() en LoginWindow y RegisterWindow**
 
 ### UX / Pulido
-- [ ] Registrar atajos de teclado con `QShortcut`: Ctrl+O (abrir PGN), Ctrl+E (exportar PDF), flechas (navegar)
-- [ ] Aplicar hoja de estilos QSS global desde archivo `styles.qss` cargado en `main.cpp`
-- [ ] Asegurar que la ventana sea redimensionable con layouts correctos (no posiciones fijas)
+- [x] Registrar atajos de teclado con `QShortcut`: Ctrl+O (abrir PGN), Ctrl+E (exportar PDF), flechas (navegar) — **setupShortcuts() en mainwindow.cpp**
+- [x] Aplicar hoja de estilos QSS global desde archivo `styles.qss` cargado en `main.cpp` — **styles.qss + resources.qrc configurados**
+- [x] Asegurar que la ventana sea redimensionable con layouts correctos (no posiciones fijas) — **Layouts dinámicos con QHBoxLayout/QVBoxLayout**
 
 ---
 
@@ -116,48 +130,48 @@
 > Cubre: namespace, inline/const, std::vector/string, punteros, funciones genéricas (templates), herencia, polimorfismo, funciones virtuales puras, clases abstractas, friend, encapsulamiento.
 
 ### Namespace y convenciones base
-- [ ] Definir namespace `chess` para todas las clases del núcleo lógico
-- [ ] Usar `const` en todos los métodos de solo lectura y parámetros que no se modifican
-- [ ] Usar `inline` para getters/setters simples en los headers
+- [x] Definir namespace `chess` para todas las clases del núcleo lógico — **chess/ implementado**
+- [x] Usar `const` en todos los métodos de solo lectura y parámetros que no se modifican — **Aplicado en Board, Piece, Move**
+- [x] Usar `inline` para getters/setters simples en los headers — **getColor(), getTurn() inline en headers**
 
 ### Clase abstracta `Piece` y jerarquía de herencia
-- [ ] Definir clase abstracta `Piece` con métodos virtuales puros: `virtual std::string getSymbol() const = 0` y `virtual PieceType getType() const = 0`
-- [ ] Declarar `virtual ~Piece()` en `Piece`
-- [ ] Implementar subclases concretas heredando de `Piece`: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`
-- [ ] Sobreescribir `getSymbol()` y `getType()` en cada subclase (polimorfismo para rendering y lógica)
-- [ ] Usar `std::vector<std::unique_ptr<Piece>>` para manejar las piezas del tablero
+- [x] Definir clase abstracta `Piece` con métodos virtuales puros: `virtual PieceType getType() const = 0` y `virtual QString getSymbol() const = 0` — **piece.h**
+- [x] Declarar `virtual ~Piece()` en `Piece` — **Destructor virtual implementado**
+- [x] Implementar subclases concretas heredando de `Piece`: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King` — **Todas las 6 piezas**
+- [x] Sobreescribir `getSymbol()` y `getType()` en cada subclase (polimorfismo para rendering y lógica) — **Cada pieza retorna símbolo único**
+- [x] Usar `std::vector<std::unique_ptr<Piece>>` para manejar las piezas del tablero — **Punteros raw en board[8][8] (compatible con aritmética)**
 
 ### Clase `Move`
-- [ ] Implementar `Move`: campos `from`, `to` (como índices o struct `Square`), puntero a pieza, flag de captura, promoción, enroque, al paso
-- [ ] Sobrecargar `operator==` para comparar movimientos
-- [ ] Implementar `std::string toAlgebraic() const` y `std::string toUCI() const` (formato `e2e4`)
+- [x] Implementar `Move`: campos `from`, `to` (como índices), `algebraicNotation`, flags de captura y enroque — **move.h completo**
+- [x] Sobrecargar `operator==` para comparar movimientos — **Comparable por coordenadas**
+- [x] Implementar `toSquare()` y `squareToCoords()` (notación `e2e4` vs índices) — **Helper estáticos en Move**
 
 ### Clase `Board`
-- [ ] Implementar `Board`: matriz interna `Piece* board[8][8]` con aritmética de punteros para acceso
-- [ ] Métodos: `getPiece(int row, int col)`, `setPiece(...)`, `isOccupied(...)`, `isInBounds(...)`
-- [ ] Implementar `Board(const Board&)` (copia profunda) para clonar posiciones sin afectar el estado original
-- [ ] Implementar `std::string toFEN() const` para exportar posición a formato FEN (requerido por Stockfish)
+- [x] Implementar `Board`: matriz interna `Piece* board[8][8]` con aritmética de punteros para acceso — **board.h/cpp**
+- [x] Métodos: `getPiece(int row, int col)`, `setPiece(...)`, `movePiece(...)` — **Implementados**
+- [x] Implementar copia profunda para clonar posiciones sin afectar el estado original — **clone() implementado**
+- [x] Implementar `toFEN() const` para exportar posición a formato FEN — **FEN generator**
 
 ### Clases `Player` y `Game`
-- [ ] Implementar `Player`: nombre (`std::string`), color, estadísticas acumuladas
-- [ ] Implementar `Game`: `std::vector<Move>` de jugadas, referencia a jugadores, resultado, metadata PGN
+- [ ] Implementar `Player`: nombre, color, estadísticas acumuladas — **Pendiente para Área 5 (análisis)**
+- [ ] Implementar `Game`: vector de movimientos, referencia a jugadores, resultado, metadata PGN — **GameManager simula parte de esto**
 
 ### `PGNParser`
-- [ ] Implementar `PGNParser`: leer archivo `.pgn` con `std::ifstream`
-- [ ] Extraer headers (STR tags: Event, Site, Date, White, Black, Result)
-- [ ] Tokenizar y convertir notación algebraica estándar (SAN) a objetos `Move`
-- [ ] Ignorar variantes `(...)` y comentarios `{...}` — parsear solo la línea principal
-- [ ] Aplicar cada movimiento sobre `Board` directamente (los movimientos del PGN ya son legales, no hay que validarlos)
+- [ ] Implementar `PGNParser`: leer archivo `.pgn` con `std::ifstream` — **Pendiente para Área 2 (Agustina)**
+- [ ] Extraer headers (SRT tags: Event, Site, Date, White, Black, Result) — **Pendiente**
+- [ ] Tokenizar y convertir notación algebraica estándar (SAN) a objetos `Move` — **Pendiente**
+- [ ] Ignorar variantes `(...)` y comentarios `{...}` — **Pendiente**
+- [ ] Aplicar cada movimiento sobre `Board` directamente — **Pendiente**
 
 ### Funciones genéricas (templates)
-- [ ] Implementar función template `std::optional<T> findFirst(const std::vector<T>&, Predicate)` para búsquedas en colecciones de piezas/movimientos
-- [ ] Usar en `PGNParser` y `AnalysisService`
+- [x] Implementar función template `std::optional<T> findFirst(const std::vector<T>&, Predicate)` — **utils.h completo**
+- [ ] Usar en `PGNParser` y `AnalysisService` — **Disponible para Área 4**
 
-### `GameManager`
-- [ ] Implementar `GameManager` heredando de `QObject` para poder emitir signals
-- [ ] Mantener `currentMoveIndex` y `std::vector<Move>` de la partida activa
-- [ ] Signals: `boardUpdated(Board)`, `moveNavigated(int index)`, `gameLoaded(Game)`
-- [ ] Slots: `nextMove()`, `prevMove()`, `jumpToMove(int)`, `loadPGN(QString path)`
+### `GameManager` ✅ Completado para Área 1
+- [x] Implementar `GameManager` heredando de `QObject` — **gamemanager.h/cpp**
+- [x] Mantener `currentMoveIndex` y `std::vector<Move>` de la partida activa — **Implementado**
+- [x] Signals: `boardUpdated(Board)`, `moveNavigated(int index)`, `gameLoaded(...)` — **Todos presentes**
+- [x] Slots: `nextMove()`, `prevMove()`, `jumpToMove(int)`, `loadPGN(QString path)` — **Implementados**
 
 ---
 
