@@ -1,0 +1,159 @@
+/* Global Stylesheet for Chess Insight AI */
+
+QWidget {
+    background-color: #f5f5f5;
+    color: #333333;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 11px;
+}
+
+QMainWindow {
+    background-color: #ffffff;
+}
+
+QLabel {
+    color: #333333;
+}
+
+/* Botones */
+QPushButton {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+    min-height: 32px;
+}
+
+QPushButton:hover {
+    background-color: #45a049;
+}
+
+QPushButton:pressed {
+    background-color: #3d8b40;
+}
+
+QPushButton:disabled {
+    background-color: #cccccc;
+    color: #666666;
+}
+
+/* Campos de entrada */
+QLineEdit {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 5px 8px;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+QLineEdit:focus {
+    border: 2px solid #4CAF50;
+}
+
+QTextEdit {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 5px 8px;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+QTextEdit:focus {
+    border: 2px solid #4CAF50;
+}
+
+/* Listas */
+QListWidget {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+QListWidget::item {
+    padding: 5px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+QListWidget::item:selected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+QListWidget::item:hover {
+    background-color: #e8f5e9;
+}
+
+/* Tabs */
+QTabWidget::pane {
+    border: 1px solid #e0e0e0;
+}
+
+QTabBar::tab {
+    background-color: #e0e0e0;
+    color: #333333;
+    padding: 8px 20px;
+    border-right: 1px solid #cccccc;
+}
+
+QTabBar::tab:selected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+QTabBar::tab:hover {
+    background-color: #d0d0d0;
+}
+
+/* Menus */
+QMenuBar {
+    background-color: #ffffff;
+    color: #333333;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+QMenuBar::item:selected {
+    background-color: #e8f5e9;
+}
+
+QMenu {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #e0e0e0;
+}
+
+QMenu::item:selected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* MessageBox */
+QMessageBox {
+    background-color: #ffffff;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    width: 12px;
+    background-color: #f5f5f5;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #cccccc;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #4CAF50;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
