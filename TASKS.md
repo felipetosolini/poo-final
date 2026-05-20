@@ -10,11 +10,11 @@
 |---|---|---|---|
 | **Área 1** | ✅ **COMPLETADA** | Felipe Tosolini | 24 archivos, GUI completa con QPainter, signals/slots |
 | **Área 2** | 🟡 Parcialmente | Agustina Revuelta | Core (Piece, Board, Move) ✅ · Falta: PGNParser, Player, Game |
-| **Área 3** | ⏳ Pendiente | Ignacio Nievas | Backend FastAPI + MySQL + Docker |
+| **Área 3** | 🟡 Parcialmente | Ignacio Nievas | Backend FastAPI + MySQL ✅ · Falta: SQLite Qt, HttpClient Qt |
 | **Área 4** | ⏳ Pendiente | Lautaro Robledo | StockfishEngine UCI + análisis |
 | **Área 5** | ⏳ Pendiente | Facundo Toloza | OpenAI API + análisis + PDF |
 
-**Última actualización:** Martes 20/05/2026, 11:30 AM
+**Última actualización:** Miércoles 20/05/2026, 20:30
 
 ---
 
@@ -180,24 +180,24 @@
 > Cubre: FastAPI con endpoints REST, MySQL con SELECT/INSERT, SQLite local, JWT, Docker + Docker Compose, AWS EC2, QtNetwork.
 
 ### Backend FastAPI
-- [ ] Crear proyecto FastAPI con estructura: `routers/`, `schemas/`, `models/`, `services/`, `core/`
-- [ ] `POST /auth/register` — hashear contraseña con bcrypt, INSERT en tabla `users`
-- [ ] `POST /auth/login` — verificar hash, retornar JWT firmado
-- [ ] `GET /matches` — SELECT partidas del usuario autenticado (filtrar por `user_id` del token)
-- [ ] `POST /matches` — INSERT partida analizada con metadata y resultado
-- [ ] `GET /stats/{user_id}` — SELECT agregado: precisión promedio, conteo de blunders, etc.
-- [ ] Middleware de autenticación JWT usando `python-jose` en rutas protegidas
-- [ ] Manejo de errores HTTP con `HTTPException` y respuestas JSON estructuradas
-- [ ] Documentación automática disponible en `/docs` (Swagger UI)
+- [x] Crear proyecto FastAPI con estructura: `routers/`, `schemas/`, `models/`, `services/`, `core/`
+- [x] `POST /auth/register` — hashear contraseña con bcrypt, INSERT en tabla `users`
+- [x] `POST /auth/login` — verificar hash, retornar JWT firmado
+- [x] `GET /matches` — SELECT partidas del usuario autenticado (filtrar por `user_id` del token)
+- [x] `POST /matches` — INSERT partida analizada con metadata y resultado
+- [x] `GET /stats/{user_id}` — SELECT agregado: precisión promedio, conteo de blunders, etc.
+- [x] Middleware de autenticación JWT usando `python-jose` en rutas protegidas
+- [x] Manejo de errores HTTP con `HTTPException` y respuestas JSON estructuradas
+- [x] Documentación automática disponible en `/docs` (Swagger UI)
 
 ### Base de datos MySQL
-- [ ] Diseñar esquema relacional:
+- [x] Diseñar esquema relacional:
   - `users(id, username, email, password_hash, created_at)`
   - `matches(id, user_id, pgn, result, played_at, accuracy_white, accuracy_black)`
   - `analysis(id, match_id, move_number, eval_cp, eval_type, best_move, classification)`
-- [ ] Integrar SQLAlchemy con modelos ORM para cada tabla
-- [ ] Crear tablas con `Base.metadata.create_all()` al iniciar el servidor (sin Alembic)
-- [ ] Implementar `UserRepository`, `MatchRepository`, `StatisticsRepository` con métodos SELECT e INSERT
+- [x] Integrar SQLAlchemy con modelos ORM para cada tabla
+- [x] Crear tablas con `Base.metadata.create_all()` al iniciar el servidor (sin Alembic)
+- [x] Implementar `UserRepository`, `MatchRepository`, `StatisticsRepository` con métodos SELECT e INSERT
 
 ### Persistencia local SQLite (Qt)
 - [ ] Usar `QSqlDatabase` con driver SQLite en el cliente Qt
@@ -206,8 +206,8 @@
 - [ ] Limpiar sesión al hacer logout
 
 ### Deploy en servidor Contabo VPS
-- [ ] Agregar healthcheck al servicio `db` en `docker-compose.yml` para que `api` espere antes de iniciar
-- [ ] Actualizar la URL base del `HttpClient` en Qt para apuntar a `89.116.29.15`
+- [x] Agregar healthcheck al servicio `db` en `docker-compose.yml` para que `api` espere antes de iniciar
+- [x] Actualizar la URL base del `HttpClient` en Qt para apuntar a `89.116.29.15`
 - [ ] (Opcional) Configurar acceso SSH por clave pública para cada integrante del grupo
 
 ### Comunicación Qt ↔ Backend (QtNetwork)
