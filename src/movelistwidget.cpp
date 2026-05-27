@@ -23,7 +23,7 @@ void MoveListWidget::setCurrentMove(int index) {
 }
 
 void MoveListWidget::onItemClicked(QListWidgetItem *item) {
-    int row = row(item);
+    int row = QListWidget::row(item);
     if (row >= 0 && row < static_cast<int>(moveIndices.size())) {
         emit moveSelected(moveIndices[row]);
     }

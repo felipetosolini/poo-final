@@ -11,7 +11,7 @@
 | **Área 1** | ✅ **COMPLETADA** | Felipe Tosolini | 24 archivos, GUI completa con QPainter, signals/slots |
 | **Área 2** | ✅ **COMPLETADA** | Agustina Revuelta | Piece/Board/Move ✅ · Player ✅ · Game ✅ · PGNParser ✅ |
 | **Área 3** | 🟡 Parcialmente | Ignacio Nievas | Backend FastAPI + MySQL ✅ · Falta: SQLite Qt, HttpClient Qt |
-| **Área 4** | ⏳ Pendiente | Lautaro Robledo | StockfishEngine UCI + análisis |
+| **Área 4** | 🟡 Parcialmente | Lautaro Robledo | StockfishEngine ✅ · AnalysisService ✅ · EvaluationBar ✅ · Falta: conectar a MainWindow |
 | **Área 5** | ⏳ Pendiente | Facundo Toloza | OpenAI API + análisis + PDF |
 
 **Última actualización:** Martes 27/05/2026
@@ -224,60 +224,50 @@
 > Cubre: protocolo UCI completo vía QProcess, parsing de output, análisis posición a posición, Evaluation Bar, Accuracy Score.
 
 ### Setup y ciclo de vida del proceso Stockfish
-- [ ] Implementar clase `StockfishEngine` heredando `QObject`; lanzar proceso con `QProcess` apuntando a `bin/stockfish.exe`
-- [ ] Configurar `QProcess`: `setReadChannel(QProcess::StandardOutput)`, deshabilitar stderr para no interferir
-- [ ] **Handshake UCI**: enviar `"uci\n"`, leer líneas hasta recibir `"uciok"` → motor listo
-- [ ] **Sincronización**: enviar `"isready\n"`, leer hasta `"readyok"` antes de cualquier análisis
-- [ ] **Nueva partida**: enviar `"ucinewgame\n"` al cargar cada partida nueva
-- [ ] **Shutdown limpio**: enviar `"quit\n"` al cerrar la app o destruir `StockfishEngine`
+- [x] Implementar clase `StockfishEngine` heredando `QObject`; lanzar proceso con `QProcess` apuntando a `bin/stockfish.exe`
+- [x] Configurar `QProcess`: `setReadChannel(QProcess::StandardOutput)`, deshabilitar stderr para no interferir
+- [x] **Handshake UCI**: enviar `"uci\n"`, leer líneas hasta recibir `"uciok"` → motor listo
+- [x] **Sincronización**: enviar `"isready\n"`, leer hasta `"readyok"` antes de cualquier análisis
+- [x] **Nueva partida**: enviar `"ucinewgame\n"` al cargar cada partida nueva
+- [x] **Shutdown limpio**: enviar `"quit\n"` al cerrar la app o destruir `StockfishEngine`
 
 ### Configuración del motor (setoption)
-- [ ] Enviar `"setoption name Threads value 4\n"` (ajustar a núcleos disponibles)
-- [ ] Enviar `"setoption name Hash value 256\n"` (MB para tabla de transposición)
-- [ ] Enviar `"setoption name Skill Level value 20\n"` para análisis a máxima fuerza
+- [x] Enviar `"setoption name Threads value 4\n"` (ajustar a núcleos disponibles)
+- [x] Enviar `"setoption name Hash value 256\n"` (MB para tabla de transposición)
+- [x] Enviar `"setoption name Skill Level value 20\n"` para análisis a máxima fuerza
 - [ ] Permitir configurar `UCI_Elo` (rango 1320–3190) para modo de práctica contra el motor
 
 ### Envío de posición y análisis
-- [ ] Enviar posición con FEN: `"position fen <fen_string>\n"` (usar `Board::toFEN()`)
-- [ ] Alternativamente: `"position startpos moves e2e4 e7e5 ...\n"` con movimientos en formato UCI largo (`e2e4`, no `e4`)
-- [ ] Iniciar análisis a profundidad fija: `"go depth 20\n"`
-- [ ] Iniciar análisis con tiempo límite por jugada: `"go movetime 3000\n"` (3 segundos)
-- [ ] Detener análisis anticipadamente si es necesario: `"stop\n"` (el motor responde con `bestmove`)
+- [x] Enviar posición con FEN: `"position fen <fen_string>\n"` (usar `Board::toFEN()`)
+- [x] Iniciar análisis a profundidad fija: `"go depth 20\n"`
+- [x] Iniciar análisis con tiempo límite por jugada: `"go movetime 3000\n"` (3 segundos)
+- [x] Detener análisis anticipadamente si es necesario: `"stop\n"` (el motor responde con `bestmove`)
 
 ### Parsing de output del motor
-- [ ] Conectar `QProcess::readyReadStandardOutput` a slot `onStockfishOutput()`
-- [ ] Parsear líneas `info ...` en tiempo real:
-  - `depth <n>` — profundidad alcanzada
-  - `score cp <n>` — evaluación en centipawns (positivo = ventaja blancas; negar para negras)
-  - `score mate <n>` — mate en N movimientos
-  - `pv <move1> <move2> ...` — línea principal recomendada
-  - `nodes <n>` y `nps <n>` — estadísticas de rendimiento
-- [ ] Parsear línea `bestmove <move> [ponder <move>]` como señal de fin de análisis
-- [ ] Emitir signals: `evalUpdated(int cp)`, `bestMoveFound(QString move)`, `pvUpdated(QStringList pv)`
+- [x] Conectar `QProcess::readyReadStandardOutput` a slot `onStockfishOutput()`
+- [x] Parsear líneas `info ...` en tiempo real: `depth`, `score cp`, `score mate`, `pv`
+- [x] Parsear línea `bestmove <move> [ponder <move>]` como señal de fin de análisis
+- [x] Emitir signals: `evalUpdated(int cp)`, `bestMoveFound(QString move)`, `pvUpdated(QStringList pv)`
 
 ### `AnalysisService` — análisis completo de partida
-- [ ] Implementar `AnalysisService`: iterar sobre cada movimiento de la partida
-- [ ] Para cada posición: enviar FEN → `go depth 18` → esperar `bestmove` → guardar evaluación
-- [ ] Calcular delta de evaluación entre la jugada jugada y la mejor jugada del motor
-- [ ] Clasificar cada movimiento según delta (centipawns):
-  - **Best / Excellent**: delta ≤ 10 cp
-  - **Good**: delta ≤ 25 cp
-  - **Inaccuracy**: delta 26–100 cp
-  - **Mistake**: delta 101–300 cp
-  - **Blunder**: delta > 300 cp
-- [ ] Almacenar resultado en `std::vector<MoveAnalysis>` (eval, clasificación, mejor jugada, línea PV)
-- [ ] Emitir signal `analysisComplete(QVector<MoveAnalysis>)` al finalizar
+- [x] Implementar `AnalysisService`: iterar sobre cada movimiento de la partida
+- [x] Para cada posición: enviar FEN → `go depth 18` → esperar `bestmove` → guardar evaluación
+- [x] Calcular delta de evaluación entre la jugada jugada y la mejor jugada del motor
+- [x] Clasificar cada movimiento según delta (Best/Good/Inaccuracy/Mistake/Blunder)
+- [x] Almacenar resultado en `QVector<MoveAnalysis>` (eval, clasificación, mejor jugada, línea PV)
+- [x] Emitir signal `analysisComplete(QVector<MoveAnalysis>)` al finalizar
 
 ### Evaluation Bar
-- [ ] Implementar `EvaluationBarWidget` con `QPainter`: barra vertical dividida blanco/negro
-- [ ] Mapear centipawns a porcentaje visual (usar función sigmoide para suavizar extremos)
-- [ ] Mostrar `M3`, `M-5`, etc. cuando hay mate detectado
-- [ ] Animar transición entre evaluaciones con `QPropertyAnimation`
+- [x] Implementar `EvaluationBarWidget` con `QPainter`: barra vertical dividida blanco/negro
+- [x] Mapear centipawns a porcentaje visual (usar función sigmoide para suavizar extremos)
+- [x] Mostrar `M3`, `M-5`, etc. cuando hay mate detectado
+- [x] Animar transición entre evaluaciones con `QPropertyAnimation`
 
 ### Accuracy Score
-- [ ] Calcular precisión por jugador: `accuracy = 100 * (1 - avg_error_rate)`
-- [ ] Desglosar por fase: apertura (jugadas 1–10), medio juego (11–30), final (31+)
-- [ ] Exponer métricas al `AnalysisPanel` vía signal `accuracyReady(double white, double black)`
+- [x] Calcular precisión por jugador con fórmula exponencial (modelo lichess)
+- [x] Desglosar por fase: apertura (jugadas 1–10), medio juego (11–30), final (31+)
+- [x] Exponer métricas vía signal `analysisComplete(..., AccuracyScore)`
+- [ ] Conectar `AnalysisService` a `MainWindow` / `AnalysisSidebarWidget`
 
 ---
 

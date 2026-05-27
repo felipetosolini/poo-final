@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QShortcut>
+#include <QVector>
 #include "gamemanager.h"
 #include "boardwidget.h"
 #include "movelistwidget.h"
@@ -10,6 +11,8 @@
 #include "analysissidebar.h"
 #include "loginwindow.h"
 #include "registerwindow.h"
+#include "stockfishengine.h"
+#include "analysisservice.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -27,13 +30,13 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    // GameManager signals
+    // GameManager
     void onBoardUpdated(const chess::Board& board);
     void onMoveNavigated(int index);
-    
-    // BoardWidget signals
+
+    // BoardWidget
     void onMoveRequested(const chess::Move& move);
-    
+
     // UI actions
     void onOpenPGN();
     void onExportPDF();
@@ -42,39 +45,53 @@ private slots:
     void onStartGame();
     void onEndGame();
     void onPlayPause();
-    
+
     // Auth
     void onLoginRequested(const QString& username, const QString& password);
     void onRegisterRequested();
     void onBackToLogin();
 
+    // Stockfish / Análisis
+    void onEngineReady();
+    void onAnalysisProgress(int current, int total);
+    void onMoveAnalyzed(int moveIndex, MoveAnalysis analysis);
+    void onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore accuracy);
+
 private:
     Ui::MainWindow *ui;
-    
+
     // Core components
-    GameManager *gameManager;
-    BoardWidget *boardWidget;
-    MoveListWidget *moveListWidget;
-    CapturedPiecesWidget *capturedPiecesWidget;
-    EvaluationBarWidget *evaluationBarWidget;
-    AnalysisSidebarWidget *analysisSidebar;
-    LoginWindow *loginWindow;
-    RegisterWindow *registerWindow;
-    
+    GameManager             *gameManager          = nullptr;
+    BoardWidget             *boardWidget           = nullptr;
+    MoveListWidget          *moveListWidget        = nullptr;
+    CapturedPiecesWidget    *capturedPiecesWidget  = nullptr;
+    EvaluationBarWidget     *evaluationBarWidget   = nullptr;
+    AnalysisSidebarWidget   *analysisSidebar       = nullptr;
+    LoginWindow             *loginWindow           = nullptr;
+    RegisterWindow          *registerWindow        = nullptr;
+
+    // Stockfish + análisis (Área 4)
+    StockfishEngine         *stockfishEngine       = nullptr;
+    AnalysisService         *analysisService       = nullptr;
+    QVector<MoveAnalysis>    analysisResults;
+    std::vector<chess::Board> gameBoardStates;
+
     // Shortcuts
-    QShortcut *shortcutOpenPGN;
-    QShortcut *shortcutExportPDF;
-    QShortcut *shortcutPrevMove;
-    QShortcut *shortcutNextMove;
-    
+    QShortcut *shortcutOpenPGN  = nullptr;
+    QShortcut *shortcutExportPDF = nullptr;
+    QShortcut *shortcutPrevMove = nullptr;
+    QShortcut *shortcutNextMove = nullptr;
+
     // State
-    bool isPlaying = false;
-    int playbackSpeed = 1000;  // ms
-    
+    bool isPlaying    = false;
+    int  playbackSpeed = 1000;
+
     void setupUI();
     void setupConnections();
     void setupShortcuts();
     void applyStyles();
     void showLoginWindow();
     void showMainWindow();
+    void showMoveAnalysis(int moveIndex);
+    std::vector<chess::Board> buildBoardStates(const std::vector<chess::Move>& moves);
 };
