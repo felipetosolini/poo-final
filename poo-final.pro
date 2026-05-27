@@ -15,6 +15,15 @@ SOURCES += \
     src/loginwindow.cpp \
     src/registerwindow.cpp \
     src/gamemanager.cpp \
+    src/sessionmanager.cpp \
+    src/httpclient.cpp \
+    src/authservice.cpp \
+    src/matchhistoryservice.cpp \
+    src/aiexplanationservice.cpp \
+    src/statisticsservice.cpp \
+    src/statisticsview.cpp \
+    src/pdfexporter.cpp \
+    src/config.cpp \
     src/chess/board.cpp \
     src/chess/player.cpp \
     src/chess/game.cpp \
@@ -30,6 +39,16 @@ HEADERS += \
     src/loginwindow.h \
     src/registerwindow.h \
     src/gamemanager.h \
+    src/userdata.h \
+    src/sessionmanager.h \
+    src/httpclient.h \
+    src/authservice.h \
+    src/matchhistoryservice.h \
+    src/aiexplanationservice.h \
+    src/statisticsservice.h \
+    src/statisticsview.h \
+    src/pdfexporter.h \
+    src/analysisdata.h \
     src/chess/board.h \
     src/chess/piece.h \
     src/chess/move.h \

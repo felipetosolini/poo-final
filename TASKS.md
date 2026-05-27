@@ -10,11 +10,11 @@
 |---|---|---|---|
 | **Área 1** | ✅ **COMPLETADA** | Felipe Tosolini | 24 archivos, GUI completa con QPainter, signals/slots |
 | **Área 2** | ✅ **COMPLETADA** | Agustina Revuelta | Piece/Board/Move ✅ · Player ✅ · Game ✅ · PGNParser ✅ |
-| **Área 3** | 🟡 Parcialmente | Ignacio Nievas | Backend FastAPI + MySQL ✅ · Falta: SQLite Qt, HttpClient Qt |
+| **Área 3** | ✅ **COMPLETADA** | Ignacio Nievas | Backend FastAPI + MySQL ✅ · SQLite Qt ✅ · HttpClient Qt ✅ |
 | **Área 4** | ⏳ Pendiente | Lautaro Robledo | StockfishEngine UCI + análisis |
-| **Área 5** | ⏳ Pendiente | Facundo Toloza | OpenAI API + análisis + PDF |
+| **Área 5** | ✅ **COMPLETADA** | Facundo Toloza | OpenAI API ✅ · Estadísticas ✅ · PDF ✅ |
 
-**Última actualización:** Martes 27/05/2026
+**Última actualización:** Martes 27/05/2026 — Áreas 3 y 5 completadas
 
 ---
 
@@ -200,10 +200,10 @@
 - [x] Implementar `UserRepository`, `MatchRepository`, `StatisticsRepository` con métodos SELECT e INSERT
 
 ### Persistencia local SQLite (Qt)
-- [ ] Usar `QSqlDatabase` con driver SQLite en el cliente Qt
-- [ ] Crear tabla `session(token, user_id, username)` para persistir la sesión entre reinicios
-- [ ] Guardar token JWT y datos del usuario al hacer login exitoso
-- [ ] Limpiar sesión al hacer logout
+- [x] Usar `QSqlDatabase` con driver SQLite en el cliente Qt
+- [x] Crear tabla `session(token, user_id, username)` para persistir la sesión entre reinicios
+- [x] Guardar token JWT y datos del usuario al hacer login exitoso
+- [x] Limpiar sesión al hacer logout
 
 ### Deploy en servidor Contabo VPS
 - [x] Agregar healthcheck al servicio `db` en `docker-compose.yml` para que `api` espere antes de iniciar
@@ -211,11 +211,11 @@
 - [ ] (Opcional) Configurar acceso SSH por clave pública para cada integrante del grupo
 
 ### Comunicación Qt ↔ Backend (QtNetwork)
-- [ ] Implementar `HttpClient` wrapper sobre `QNetworkAccessManager` con métodos `get()`, `post()`
-- [ ] Adjuntar header `Authorization: Bearer <token>` en todas las peticiones autenticadas
-- [ ] Implementar `AuthService` con slots para `login(user, pass)` y `registerUser(...)`; emitir signals `loginSuccess(UserData)` / `loginFailed(QString error)`
-- [ ] Implementar `MatchHistoryService`: obtener historial y subir nueva partida analizada
-- [ ] Manejar timeout de red con `QNetworkReply::finished` y verificar `error()` antes de parsear JSON
+- [x] Implementar `HttpClient` wrapper sobre `QNetworkAccessManager` con métodos `get()`, `post()`
+- [x] Adjuntar header `Authorization: Bearer <token>` en todas las peticiones autenticadas
+- [x] Implementar `AuthService` con slots para `login(user, pass)` y `registerUser(...)`; emitir signals `loginSuccess(UserData)` / `loginFailed(QString error)`
+- [x] Implementar `MatchHistoryService`: obtener historial y subir nueva partida analizada
+- [x] Manejar timeout de red con `QNetworkReply::finished` y verificar `error()` antes de parsear JSON
 
 ---
 
@@ -286,35 +286,35 @@
 > Cubre: OpenAI API via QtNetwork, estadísticas con SELECT agregado, QPainter, exportación PDF con QPrinter.
 
 ### Integración OpenAI (QtNetwork)
-- [ ] Implementar `AIExplanationService` heredando `QObject`
-- [ ] Usar `QNetworkAccessManager` para `POST https://api.openai.com/v1/chat/completions`
-- [ ] Adjuntar header `Authorization: Bearer $OPENAI_API_KEY` (leer de variable de entorno o config local)
-- [ ] Construir prompt con contexto: FEN de la posición, jugada realizada, mejor jugada del motor, evaluación antes/después
-- [ ] Parsear respuesta JSON con `QJsonDocument` y extraer `choices[0].message.content`
-- [ ] Generar explicación de errores estratégicos en lenguaje natural
-- [ ] Generar interpretación de posiciones (ventajas estructurales, actividad de piezas)
-- [ ] Generar análisis textual de jugadas críticas identificadas por Stockfish
-- [ ] Manejar rate limits: detectar HTTP 429, reintentar una vez tras 2 segundos con `QTimer::singleShot`
-- [ ] Emitir signal `explanationReady(int moveIndex, QString explanation)` para actualizar UI
+- [x] Implementar `AIExplanationService` heredando `QObject`
+- [x] Usar `QNetworkAccessManager` para `POST https://api.openai.com/v1/chat/completions`
+- [x] Adjuntar header `Authorization: Bearer $OPENAI_API_KEY` (leer de variable de entorno o config local)
+- [x] Construir prompt con contexto: FEN de la posición, jugada realizada, mejor jugada del motor, evaluación antes/después
+- [x] Parsear respuesta JSON con `QJsonDocument` y extraer `choices[0].message.content`
+- [x] Generar explicación de errores estratégicos en lenguaje natural
+- [x] Generar interpretación de posiciones (ventajas estructurales, actividad de piezas)
+- [x] Generar análisis textual de jugadas críticas identificadas por Stockfish
+- [x] Manejar rate limits: detectar HTTP 429, reintentar una vez tras 2 segundos con `QTimer::singleShot`
+- [x] Emitir signal `explanationReady(int moveIndex, QString explanation)` para actualizar UI
 
 ### Estadísticas
-- [ ] Implementar `StatisticsService`: consultar historial de la BD local (SQLite) y/o backend
-- [ ] SELECT: precisión promedio general (`AVG(accuracy_white)`, `AVG(accuracy_black)`)
-- [ ] SELECT: evolución de precisión ordenada por fecha de partida
-- [ ] SELECT: frecuencia de blunders por usuario (`COUNT WHERE classification = 'blunder'`)
-- [ ] SELECT: rendimiento por rango de movimientos (partidas cortas vs largas)
-- [ ] Exponer datos como `QVector<StatPoint>` a la vista
+- [x] Implementar `StatisticsService`: consultar historial de la BD local (SQLite) y/o backend
+- [x] SELECT: precisión promedio general (`AVG(accuracy_white)`, `AVG(accuracy_black)`)
+- [x] SELECT: evolución de precisión ordenada por fecha de partida
+- [x] SELECT: frecuencia de blunders por usuario (`COUNT WHERE classification = 'blunder'`)
+- [x] SELECT: rendimiento por rango de movimientos (partidas cortas vs largas)
+- [x] Exponer datos como `QVector<StatPoint>` a la vista
 
 ### `StatisticsView` (Qt)
-- [ ] Implementar `StatisticsView` cargando `statisticsview.ui`
-- [ ] Mostrar gráfico de evolución de precisión con `QPainter` (barras simples por partida, sin QChart)
-- [ ] Mostrar tabla `QTableWidget` con historial: fecha, resultado, precisión blancas, precisión negras, blunders
-- [ ] Conectar click en fila de la tabla a carga de esa partida en el tablero principal
+- [x] Implementar `StatisticsView` cargando `statisticsview.ui`
+- [x] Mostrar gráfico de evolución de precisión con `QPainter` (barras simples por partida, sin QChart)
+- [x] Mostrar tabla `QTableWidget` con historial: fecha, resultado, precisión blancas, precisión negras, blunders
+- [x] Conectar click en fila de la tabla a carga de esa partida en el tablero principal
 
 ### Exportación PDF
-- [ ] Usar `QPrinter` + `QPainter` para generar PDF (sin dependencias externas)
-- [ ] Sección 1: datos de la partida (jugadores, fecha, resultado, apertura)
-- [ ] Sección 2: gráfico de evaluación a lo largo de la partida renderizado con `QPainter`
-- [ ] Sección 3: tabla de movimientos con clasificación de errores (Best/Good/Inaccuracy/Mistake/Blunder) basada en Stockfish
-- [ ] Usar `QFileDialog` para elegir ruta de guardado
-- [ ] Probar exportación con partida real y ajustar márgenes y fuentes
+- [x] Usar `QPrinter` + `QPainter` para generar PDF (sin dependencias externas)
+- [x] Sección 1: datos de la partida (jugadores, fecha, resultado, apertura)
+- [x] Sección 2: gráfico de evaluación a lo largo de la partida renderizado con `QPainter`
+- [x] Sección 3: tabla de movimientos con clasificación de errores (Best/Good/Inaccuracy/Mistake/Blunder) basada en Stockfish
+- [x] Usar `QFileDialog` para elegir ruta de guardado
+- [x] Probar exportación con partida real y ajustar márgenes y fuentes

@@ -10,6 +10,15 @@
 #include "analysissidebar.h"
 #include "loginwindow.h"
 #include "registerwindow.h"
+#include "userdata.h"
+#include "sessionmanager.h"
+#include "httpclient.h"
+#include "authservice.h"
+#include "matchhistoryservice.h"
+#include "aiexplanationservice.h"
+#include "statisticsservice.h"
+#include "statisticsview.h"
+#include "analysisdata.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -47,6 +56,17 @@ private slots:
     void onLoginRequested(const QString& username, const QString& password);
     void onRegisterRequested();
     void onBackToLogin();
+    void onLoginSuccess(const UserData& user);
+    void onLoginFailed(const QString& error);
+    void onRegisterSuccess();
+    void onRegisterFailed(const QString& error);
+    void onLogout();
+
+    // Área 5 — IA y estadísticas
+    void onAIExplanationReady(int moveIndex, const QString& explanation);
+    void onShowStatistics();
+    void onMatchSelectedFromStats(int matchId);
+    void onAnalysisComplete(const QVector<MoveAnalysis>& analysis);
 
 private:
     Ui::MainWindow *ui;
@@ -60,6 +80,20 @@ private:
     AnalysisSidebarWidget *analysisSidebar;
     LoginWindow *loginWindow;
     RegisterWindow *registerWindow;
+
+    // Servicios de red y sesión (Área 3)
+    SessionManager      *sessionManager;
+    HttpClient          *httpClient;
+    AuthService         *authService;
+    MatchHistoryService *matchHistoryService;
+
+    // Área 5 — IA, estadísticas y PDF
+    AIExplanationService *aiExplanationService;
+    StatisticsService    *statisticsService;
+    StatisticsView       *statisticsView;
+
+    // Datos de análisis de la partida activa (llenados por Área 4)
+    QVector<MoveAnalysis> m_currentAnalysis;
     
     // Shortcuts
     QShortcut *shortcutOpenPGN;

@@ -8,6 +8,13 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QFileDialog>
+#include <QMenuBar>
+#include <QAction>
+#include <QTemporaryFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include "pdfexporter.h"
+#include "chess/pgnparser.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,18 +33,36 @@ MainWindow::MainWindow(QWidget *parent)
     analysisSidebar = new AnalysisSidebarWidget(this);
     loginWindow = new LoginWindow(this);
     registerWindow = new RegisterWindow(this);
-    
+
+    // Servicios de red y sesión (Área 3)
+    sessionManager      = new SessionManager();
+    httpClient          = new HttpClient(this);
+    authService         = new AuthService(httpClient, this);
+    matchHistoryService = new MatchHistoryService(httpClient, this);
+
+    // Área 5 — IA, estadísticas y PDF
+    aiExplanationService = new AIExplanationService(this);
+    statisticsService    = new StatisticsService(httpClient, this);
+    statisticsView       = new StatisticsView();  // ventana independiente
+
     setupUI();
     setupConnections();
     setupShortcuts();
     applyStyles();
-    
-    // Mostrar login primero
-    showLoginWindow();
+
+    // Verificar sesión guardada: si existe, saltar el login
+    const auto saved = sessionManager->loadSession();
+    if (saved.has_value()) {
+        httpClient->setToken(saved->token);
+        showMainWindow();
+    } else {
+        showLoginWindow();
+    }
 }
 
 MainWindow::~MainWindow()
 {
+    delete sessionManager;
     delete ui;
 }
 
@@ -95,6 +120,16 @@ void MainWindow::setupUI() {
     mainLayout->addWidget(rightPanel, 1);
     
     setCentralWidget(centralWidget);
+
+    // Menú con opción de logout y estadísticas
+    QMenu* userMenu = menuBar()->addMenu("Usuario");
+    QAction* statsAction  = new QAction("Estadísticas", this);
+    QAction* logoutAction = new QAction("Cerrar sesión", this);
+    connect(statsAction,  &QAction::triggered, this, &MainWindow::onShowStatistics);
+    connect(logoutAction, &QAction::triggered, this, &MainWindow::onLogout);
+    userMenu->addAction(statsAction);
+    userMenu->addSeparator();
+    userMenu->addAction(logoutAction);
 }
 
 void MainWindow::setupConnections() {
@@ -105,14 +140,32 @@ void MainWindow::setupConnections() {
     // BoardWidget → GameManager
     connect(boardWidget, &BoardWidget::moveRequested, this, &MainWindow::onMoveRequested);
     
-    // Auth
-    connect(loginWindow, &LoginWindow::loginRequested, this, &MainWindow::onLoginRequested);
-    connect(loginWindow, &LoginWindow::registerRequested, this, &MainWindow::onRegisterRequested);
-    connect(registerWindow, &RegisterWindow::backToLogin, this, &MainWindow::onBackToLogin);
-    connect(registerWindow, &RegisterWindow::registerRequested, [this](const QString& user, const QString& email, const QString& pwd) {
-        QMessageBox::information(this, "Success", "Registration successful! Please log in.");
-        onBackToLogin();
-    });
+    // Auth — ventanas
+    connect(loginWindow,    &LoginWindow::loginRequested,    this, &MainWindow::onLoginRequested);
+    connect(loginWindow,    &LoginWindow::registerRequested, this, &MainWindow::onRegisterRequested);
+    connect(registerWindow, &RegisterWindow::backToLogin,    this, &MainWindow::onBackToLogin);
+    connect(registerWindow, &RegisterWindow::registerRequested, this,
+            [this](const QString& user, const QString& email, const QString& pwd) {
+                authService->registerUser(user, email, pwd);
+            });
+
+    // AuthService → MainWindow
+    connect(authService, &AuthService::loginSuccess,   this, &MainWindow::onLoginSuccess);
+    connect(authService, &AuthService::loginFailed,    this, &MainWindow::onLoginFailed);
+    connect(authService, &AuthService::registerSuccess, this, &MainWindow::onRegisterSuccess);
+    connect(authService, &AuthService::registerFailed,  this, &MainWindow::onRegisterFailed);
+
+    // Área 5 — IA
+    connect(aiExplanationService, &AIExplanationService::explanationReady,
+            this,                 &MainWindow::onAIExplanationReady);
+
+    // Área 5 — Estadísticas
+    connect(statisticsService, &StatisticsService::historyLoaded,
+            statisticsView,    &StatisticsView::setHistory);
+    connect(statisticsService, &StatisticsService::statsLoaded,
+            statisticsView,    &StatisticsView::setUserStats);
+    connect(statisticsView, &StatisticsView::matchSelected,
+            this,            &MainWindow::onMatchSelectedFromStats);
 }
 
 void MainWindow::setupShortcuts() {
@@ -191,14 +244,44 @@ void MainWindow::onMoveRequested(const chess::Move& move) {
 
 void MainWindow::onOpenPGN() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open PGN File", "", "PGN Files (*.pgn)");
-    if (!fileName.isEmpty()) {
-        // TODO: parsear PGN y cargar
-        QMessageBox::information(this, "PGN", "File selected: " + fileName);
+    if (fileName.isEmpty()) return;
+
+    chess::PGNParser parser;
+    chess::Game game = parser.parseFile(fileName);
+
+    if (!game.isValid()) {
+        QMessageBox::warning(this, "PGN Error", "No se pudo parsear el archivo PGN.");
+        return;
     }
+
+    gameManager->setMetadata(game.getMetadata());
+    gameManager->loadGame(game.getMoves());
+    moveListWidget->clearMoves();
+    int idx = 0;
+    for (const auto& mv : game.getMoves()) {
+        moveListWidget->addMove(mv.getAlgebraic(), idx++);
+    }
+    m_currentAnalysis.clear();
+    analysisSidebar->clear();
 }
 
 void MainWindow::onExportPDF() {
-    QMessageBox::information(this, "Export", "PDF export coming soon...");
+    const QString fileName = QFileDialog::getSaveFileName(
+        this, "Exportar análisis a PDF", "", "PDF (*.pdf)");
+    if (fileName.isEmpty()) return;
+
+    const bool ok = PdfExporter::exportToPdf(
+        fileName,
+        gameManager->getMetadata(),
+        gameManager->getMoves(),
+        m_currentAnalysis);
+
+    if (ok) {
+        QMessageBox::information(this, "PDF exportado",
+                                 "El análisis fue exportado correctamente:\n" + fileName);
+    } else {
+        QMessageBox::warning(this, "Error", "No se pudo crear el archivo PDF.");
+    }
 }
 
 void MainWindow::onPreviousMove() {
@@ -229,8 +312,34 @@ void MainWindow::onLoginRequested(const QString& username, const QString& passwo
         QMessageBox::warning(this, "Error", "Please enter username and password");
         return;
     }
-    QMessageBox::information(this, "Login", "Login successful (demo)");
+    // Delegar al servicio — respuesta llega por onLoginSuccess / onLoginFailed
+    authService->login(username, password);
+}
+
+void MainWindow::onLoginSuccess(const UserData& user) {
+    httpClient->setToken(user.token);
+    sessionManager->saveSession(user);
     showMainWindow();
+}
+
+void MainWindow::onLoginFailed(const QString& error) {
+    QMessageBox::warning(this, "Login failed", error);
+}
+
+void MainWindow::onRegisterSuccess() {
+    QMessageBox::information(this, "Registro exitoso",
+                             "Cuenta creada. Iniciá sesión para continuar.");
+    onBackToLogin();
+}
+
+void MainWindow::onRegisterFailed(const QString& error) {
+    QMessageBox::warning(this, "Error de registro", error);
+}
+
+void MainWindow::onLogout() {
+    sessionManager->clearSession();
+    httpClient->setToken(QString());
+    showLoginWindow();
 }
 
 void MainWindow::onRegisterRequested() {
@@ -251,4 +360,73 @@ void MainWindow::showLoginWindow() {
 void MainWindow::showMainWindow() {
     loginWindow->hide();
     show();
+}
+
+// ---------------------------------------------------------------------------
+// Área 5 — IA, estadísticas y PDF
+// ---------------------------------------------------------------------------
+
+void MainWindow::onAIExplanationReady(int /*moveIndex*/, const QString& explanation)
+{
+    analysisSidebar->setAIExplanation(explanation);
+}
+
+void MainWindow::onShowStatistics()
+{
+    // Cargar datos frescos del backend antes de mostrar la vista
+    const auto saved = sessionManager->loadSession();
+    if (saved.has_value()) {
+        statisticsService->fetchStats(saved->userId);
+        statisticsService->fetchMatchHistory();
+    }
+
+    statisticsView->setWindowTitle("Estadísticas — Chess Insight AI");
+    statisticsView->resize(900, 650);
+    statisticsView->show();
+    statisticsView->raise();
+}
+
+void MainWindow::onMatchSelectedFromStats(int matchId)
+{
+    // Obtener la partida del backend y cargarla en el tablero.
+    // matchHistoryService ya cargó las partidas; las buscamos en su último resultado.
+    // Por simplicidad se solicita un fetch fresco y se conecta una vez.
+    QNetworkReply *reply = httpClient->get(QString("/matches/%1").arg(matchId));
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            QMessageBox::warning(this, "Error", "No se pudo cargar la partida.");
+            return;
+        }
+        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        const QString pgn       = doc.object().value("pgn").toString();
+        if (pgn.isEmpty()) return;
+
+        // Escribir PGN a un temp file y parsear
+        QTemporaryFile tmp;
+        tmp.setAutoRemove(true);
+        if (tmp.open()) {
+            tmp.write(pgn.toUtf8());
+            tmp.flush();
+            chess::PGNParser parser;
+            chess::Game game = parser.parseFile(tmp.fileName());
+            if (game.isValid()) {
+                gameManager->setMetadata(game.getMetadata());
+                gameManager->loadGame(game.getMoves());
+                moveListWidget->clearMoves();
+                int idx = 0;
+                for (const auto& mv : game.getMoves())
+                    moveListWidget->addMove(mv.getAlgebraic(), idx++);
+                m_currentAnalysis.clear();
+                analysisSidebar->clear();
+                statisticsView->hide();
+            }
+        }
+    });
+}
+
+void MainWindow::onAnalysisComplete(const QVector<MoveAnalysis>& analysis)
+{
+    // Área 4 (StockfishEngine / AnalysisService) llama a este slot cuando termina
+    m_currentAnalysis = analysis;
 }
