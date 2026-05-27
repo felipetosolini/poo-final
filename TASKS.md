@@ -9,12 +9,12 @@
 | Área | Estado | Integrante | Notas |
 |---|---|---|---|
 | **Área 1** | ✅ **COMPLETADA** | Felipe Tosolini | 24 archivos, GUI completa con QPainter, signals/slots |
-| **Área 2** | 🟡 Parcialmente | Agustina Revuelta | Core (Piece, Board, Move) ✅ · Falta: PGNParser, Player, Game |
+| **Área 2** | ✅ **COMPLETADA** | Agustina Revuelta | Piece/Board/Move ✅ · Player ✅ · Game ✅ · PGNParser ✅ |
 | **Área 3** | 🟡 Parcialmente | Ignacio Nievas | Backend FastAPI + MySQL ✅ · Falta: SQLite Qt, HttpClient Qt |
 | **Área 4** | ⏳ Pendiente | Lautaro Robledo | StockfishEngine UCI + análisis |
 | **Área 5** | ⏳ Pendiente | Facundo Toloza | OpenAI API + análisis + PDF |
 
-**Última actualización:** Miércoles 20/05/2026, 20:30
+**Última actualización:** Martes 27/05/2026
 
 ---
 
@@ -153,19 +153,19 @@
 - [x] Implementar `toFEN() const` para exportar posición a formato FEN — **FEN generator**
 
 ### Clases `Player` y `Game`
-- [ ] Implementar `Player`: nombre, color, estadísticas acumuladas — **Pendiente para Área 5 (análisis)**
-- [ ] Implementar `Game`: vector de movimientos, referencia a jugadores, resultado, metadata PGN — **GameManager simula parte de esto**
+- [x] Implementar `Player`: nombre, color, estadísticas acumuladas — **player.h/cpp: recordResult(), addAccuracy(), getAverageAccuracy()**
+- [x] Implementar `Game`: vector de movimientos, referencia a jugadores, resultado, metadata PGN — **game.h/cpp: GameMetadata struct + std::optional<Player>**
 
 ### `PGNParser`
-- [ ] Implementar `PGNParser`: leer archivo `.pgn` con `std::ifstream` — **Pendiente para Área 2 (Agustina)**
-- [ ] Extraer headers (SRT tags: Event, Site, Date, White, Black, Result) — **Pendiente**
-- [ ] Tokenizar y convertir notación algebraica estándar (SAN) a objetos `Move` — **Pendiente**
-- [ ] Ignorar variantes `(...)` y comentarios `{...}` — **Pendiente**
-- [ ] Aplicar cada movimiento sobre `Board` directamente — **Pendiente**
+- [x] Implementar `PGNParser`: leer archivo `.pgn` con `std::ifstream` — **pgnparser.h/cpp: parseFile() usa std::ifstream**
+- [x] Extraer headers (SRT tags: Event, Site, Date, White, Black, Result) — **parseHeaders() con QRegularExpression**
+- [x] Tokenizar y convertir notación algebraica estándar (SAN) a objetos `Move` — **parseSAN() + resolveMove() con canPieceReach()**
+- [x] Ignorar variantes `(...)` y comentarios `{...}` — **removeVariationsAndComments() con soporte de anidamiento y `;`**
+- [x] Aplicar cada movimiento sobre `Board` directamente — **applyMoveToBoard(): enroque, en passant, promoción**
 
 ### Funciones genéricas (templates)
 - [x] Implementar función template `std::optional<T> findFirst(const std::vector<T>&, Predicate)` — **utils.h completo**
-- [ ] Usar en `PGNParser` y `AnalysisService` — **Disponible para Área 4**
+- [x] Usar en `PGNParser` — **resolveMove() usa utils::findFirst con lambda para buscar pieza de origen** · Pendiente en `AnalysisService` (Área 4)
 
 ### `GameManager` ✅ Completado para Área 1
 - [x] Implementar `GameManager` heredando de `QObject` — **gamemanager.h/cpp**

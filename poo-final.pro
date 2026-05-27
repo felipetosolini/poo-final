@@ -15,7 +15,10 @@ SOURCES += \
     src/loginwindow.cpp \
     src/registerwindow.cpp \
     src/gamemanager.cpp \
-    src/chess/board.cpp
+    src/chess/board.cpp \
+    src/chess/player.cpp \
+    src/chess/game.cpp \
+    src/chess/pgnparser.cpp
 
 HEADERS += \
     src/mainwindow.h \
@@ -30,6 +33,9 @@ HEADERS += \
     src/chess/board.h \
     src/chess/piece.h \
     src/chess/move.h \
+    src/chess/player.h \
+    src/chess/game.h \
+    src/chess/pgnparser.h \
     src/config.h \
     src/utils.h
 
