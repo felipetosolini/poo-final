@@ -4,11 +4,9 @@
 #include <QStringList>
 #include <QVector>
 
-// ---------------------------------------------------------------------------
-// Enumeración de clasificación de movimientos según delta vs. mejor jugada
-// ---------------------------------------------------------------------------
 enum class MoveClassification {
     Best,
+    Excellent,
     Good,
     Inaccuracy,
     Mistake,
@@ -19,6 +17,7 @@ inline QString classificationToString(MoveClassification c)
 {
     switch (c) {
         case MoveClassification::Best:       return "Best";
+        case MoveClassification::Excellent:  return "Excellent";
         case MoveClassification::Good:       return "Good";
         case MoveClassification::Inaccuracy: return "Inaccuracy";
         case MoveClassification::Mistake:    return "Mistake";
@@ -36,28 +35,27 @@ inline MoveClassification classifyMove(int deltaCp)
     return MoveClassification::Blunder;
 }
 
-// ---------------------------------------------------------------------------
-// Resultado del análisis de un movimiento individual (producido por Área 4)
-// ---------------------------------------------------------------------------
 struct MoveAnalysis {
-    int    moveIndex    = 0;
-    int    evalCp       = 0;      // evaluación tras el movimiento (centipawns)
-    bool   isMate       = false;
-    int    mateIn       = 0;
-    int    deltaCp      = 0;      // diferencia entre jugada jugada y mejor jugada
-    QString bestMove;             // mejor jugada en notación UCI (ej: "e2e4")
-    QString playedMove;           // jugada realizada (notación algebraica)
-    QStringList pvLine;           // línea principal
+    int    moveIndex  = 0;
+    int    evalBefore = 0;   // eval antes del movimiento (centipawns)
+    int    evalAfter  = 0;   // eval después del movimiento (centipawns)
+    int    delta      = 0;   // pérdida vs mejor jugada (siempre >= 0)
+    bool   isMate     = false;
+    int    mateIn     = 0;
+    QString bestMove;
+    QString playedMove;
+    QStringList pv;
     MoveClassification classification = MoveClassification::Good;
+
+    static QString classificationToString(MoveClassification c) {
+        return ::classificationToString(c);
+    }
 };
 
-// ---------------------------------------------------------------------------
-// Punto de estadística de una partida (para el gráfico de evolución)
-// ---------------------------------------------------------------------------
 struct StatPoint {
     int     matchId       = 0;
     QString date;
-    QString result;          // "1-0", "0-1", "1/2-1/2"
+    QString result;
     double  accuracyWhite = 0.0;
     double  accuracyBlack = 0.0;
 };

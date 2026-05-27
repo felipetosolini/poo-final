@@ -167,7 +167,7 @@ void PdfExporter::drawEvalChart(QPainter& p, const QRect& rect,
 
     for (int i = 0; i < n; ++i) {
         const int x  = rect.left() + static_cast<int>(stepX * i);
-        const int cp = analysis[i].evalCp;
+        const int cp = analysis[i].evalAfter;
         const int y  = cpToY(cp);
         if (cp >= 0) {
             polyWhite << QPoint(x, y);
@@ -192,8 +192,8 @@ void PdfExporter::drawEvalChart(QPainter& p, const QRect& rect,
     for (int i = 1; i < n; ++i) {
         const int x0 = rect.left() + static_cast<int>(stepX * (i - 1));
         const int x1 = rect.left() + static_cast<int>(stepX * i);
-        p.drawLine(x0, cpToY(analysis[i - 1].evalCp),
-                   x1, cpToY(analysis[i].evalCp));
+        p.drawLine(x0, cpToY(analysis[i - 1].evalAfter),
+                   x1, cpToY(analysis[i].evalAfter));
     }
 }
 
@@ -282,6 +282,7 @@ QColor PdfExporter::colorForClassification(MoveClassification c)
 {
     switch (c) {
         case MoveClassification::Best:       return QColor(0, 160, 0);
+        case MoveClassification::Excellent:  return QColor(0, 160, 0);
         case MoveClassification::Good:       return QColor(80, 180, 80);
         case MoveClassification::Inaccuracy: return QColor(200, 160, 0);
         case MoveClassification::Mistake:    return QColor(220, 100, 0);

@@ -1,4 +1,4 @@
-QT += core gui widgets network sql printsupport
+QT += core gui widgets network sql printsupport svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,7 +27,9 @@ SOURCES += \
     src/chess/board.cpp \
     src/chess/player.cpp \
     src/chess/game.cpp \
-    src/chess/pgnparser.cpp
+    src/chess/pgnparser.cpp \
+    src/stockfishengine.cpp \
+    src/analysisservice.cpp
 
 HEADERS += \
     src/mainwindow.h \
@@ -56,7 +58,9 @@ HEADERS += \
     src/chess/game.h \
     src/chess/pgnparser.h \
     src/config.h \
-    src/utils.h
+    src/utils.h \
+    src/stockfishengine.h \
+    src/analysisservice.h
 
 FORMS += \
     src/mainwindow.ui

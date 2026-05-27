@@ -1,4 +1,5 @@
 #include "board.h"
+#include <QStringList>
 
 namespace chess {
 

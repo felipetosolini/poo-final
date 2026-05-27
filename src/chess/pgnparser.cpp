@@ -116,7 +116,7 @@ Game PGNParser::parseSingleGame(const QString& headerBlock, const QString& moveB
 GameMetadata PGNParser::parseHeaders(const QString& headerBlock) const {
     GameMetadata meta;
 
-    QRegularExpression rx(R"(\[(\w+)\s+"([^"]*)"\])");
+    QRegularExpression rx(R"rx(\[(\w+)\s+"([^"]*)"\])rx");
     auto it = rx.globalMatch(headerBlock);
 
     while (it.hasNext()) {

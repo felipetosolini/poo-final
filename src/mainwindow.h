@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QShortcut>
+#include <QVector>
 #include "gamemanager.h"
 #include "boardwidget.h"
 #include "movelistwidget.h"
@@ -19,6 +20,8 @@
 #include "statisticsservice.h"
 #include "statisticsview.h"
 #include "analysisdata.h"
+#include "stockfishengine.h"
+#include "analysisservice.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -36,13 +39,13 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
-    // GameManager signals
+    // GameManager
     void onBoardUpdated(const chess::Board& board);
     void onMoveNavigated(int index);
-    
-    // BoardWidget signals
+
+    // BoardWidget
     void onMoveRequested(const chess::Move& move);
-    
+
     // UI actions
     void onOpenPGN();
     void onExportPDF();
@@ -51,7 +54,7 @@ private slots:
     void onStartGame();
     void onEndGame();
     void onPlayPause();
-    
+
     // Auth
     void onLoginRequested(const QString& username, const QString& password);
     void onRegisterRequested();
@@ -66,49 +69,59 @@ private slots:
     void onAIExplanationReady(int moveIndex, const QString& explanation);
     void onShowStatistics();
     void onMatchSelectedFromStats(int matchId);
-    void onAnalysisComplete(const QVector<MoveAnalysis>& analysis);
+
+    // Stockfish / Análisis (Área 4)
+    void onEngineReady();
+    void onAnalysisProgress(int current, int total);
+    void onMoveAnalyzed(int moveIndex, MoveAnalysis analysis);
+    void onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore accuracy);
 
 private:
     Ui::MainWindow *ui;
-    
-    // Core components
-    GameManager *gameManager;
-    BoardWidget *boardWidget;
-    MoveListWidget *moveListWidget;
-    CapturedPiecesWidget *capturedPiecesWidget;
-    EvaluationBarWidget *evaluationBarWidget;
-    AnalysisSidebarWidget *analysisSidebar;
-    LoginWindow *loginWindow;
-    RegisterWindow *registerWindow;
+
+    // Core widgets
+    GameManager             *gameManager          = nullptr;
+    BoardWidget             *boardWidget           = nullptr;
+    MoveListWidget          *moveListWidget        = nullptr;
+    CapturedPiecesWidget    *capturedPiecesWidget  = nullptr;
+    EvaluationBarWidget     *evaluationBarWidget   = nullptr;
+    AnalysisSidebarWidget   *analysisSidebar       = nullptr;
+    LoginWindow             *loginWindow           = nullptr;
+    RegisterWindow          *registerWindow        = nullptr;
 
     // Servicios de red y sesión (Área 3)
-    SessionManager      *sessionManager;
-    HttpClient          *httpClient;
-    AuthService         *authService;
-    MatchHistoryService *matchHistoryService;
+    SessionManager      *sessionManager      = nullptr;
+    HttpClient          *httpClient          = nullptr;
+    AuthService         *authService         = nullptr;
+    MatchHistoryService *matchHistoryService = nullptr;
 
     // Área 5 — IA, estadísticas y PDF
-    AIExplanationService *aiExplanationService;
-    StatisticsService    *statisticsService;
-    StatisticsView       *statisticsView;
+    AIExplanationService *aiExplanationService = nullptr;
+    StatisticsService    *statisticsService    = nullptr;
+    StatisticsView       *statisticsView       = nullptr;
 
-    // Datos de análisis de la partida activa (llenados por Área 4)
-    QVector<MoveAnalysis> m_currentAnalysis;
-    
+    // Stockfish + análisis (Área 4)
+    StockfishEngine         *stockfishEngine  = nullptr;
+    AnalysisService         *analysisService  = nullptr;
+    QVector<MoveAnalysis>    m_currentAnalysis;
+    std::vector<chess::Board> gameBoardStates;
+
     // Shortcuts
-    QShortcut *shortcutOpenPGN;
-    QShortcut *shortcutExportPDF;
-    QShortcut *shortcutPrevMove;
-    QShortcut *shortcutNextMove;
-    
+    QShortcut *shortcutOpenPGN   = nullptr;
+    QShortcut *shortcutExportPDF = nullptr;
+    QShortcut *shortcutPrevMove  = nullptr;
+    QShortcut *shortcutNextMove  = nullptr;
+
     // State
-    bool isPlaying = false;
-    int playbackSpeed = 1000;  // ms
-    
+    bool isPlaying     = false;
+    int  playbackSpeed = 1000;
+
     void setupUI();
     void setupConnections();
     void setupShortcuts();
     void applyStyles();
     void showLoginWindow();
     void showMainWindow();
+    void showMoveAnalysis(int moveIndex);
+    std::vector<chess::Board> buildBoardStates(const std::vector<chess::Move>& moves);
 };
