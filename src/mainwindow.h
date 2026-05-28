@@ -105,6 +105,7 @@ private:
     AnalysisService         *analysisService  = nullptr;
     QVector<MoveAnalysis>    m_currentAnalysis;
     std::vector<chess::Board> gameBoardStates;
+    std::vector<chess::Move>  m_pendingMoves;   // análisis en espera si el motor no estaba listo
 
     // Shortcuts
     QShortcut *shortcutOpenPGN   = nullptr;

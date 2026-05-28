@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 45 45">
+  <g style="fill:#111111; stroke:#cccccc; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;">
+    <path d="M 9,39 L 36,39 L 36,36 L 9,36 z"/>
+    <path d="M 12.5,36 L 12.5,32 L 32.5,32 L 32.5,36 z"/>
+    <path d="M 12,29.5 L 14,27 L 31,27 L 33,29.5 z"/>
+    <path d="M 14,27 L 14,17 L 31,17 L 31,27 z"/>
+    <path d="M 14,17 L 11,13 L 34,13 L 31,17 z"/>
+    <path d="M 11,13 L 11,8 L 15,8 L 15,12 L 20,12 L 20,8 L 25,8 L 25,12 L 30,12 L 30,8 L 34,8 L 34,13 z"/>
+  </g>
+</svg>

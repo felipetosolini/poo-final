@@ -16,6 +16,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeyEvent>
+#include <QCoreApplication>
 #include "pdfexporter.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -56,7 +57,8 @@ MainWindow::MainWindow(QWidget *parent)
     setupShortcuts();
     applyStyles();
 
-    stockfishEngine->start(Config::STOCKFISH_PATH);
+    const QString sfPath = QCoreApplication::applicationDirPath() + "/" + Config::STOCKFISH_PATH;
+    stockfishEngine->start(sfPath);
 
     // Verificar sesión guardada: si existe, saltar el login
     const auto saved = sessionManager->loadSession();
@@ -84,7 +86,7 @@ void MainWindow::setupUI()
     // Panel izquierdo: tablero + piezas capturadas
     auto leftPanel  = new QWidget();
     auto leftLayout = new QVBoxLayout(leftPanel);
-    leftLayout->addWidget(new QLabel("Chess Board"));
+    leftLayout->addWidget(new QLabel("Tablero"));
     leftLayout->addWidget(boardWidget, 1);
     leftLayout->addWidget(capturedPiecesWidget);
     mainLayout->addWidget(leftPanel, 2);
@@ -98,7 +100,7 @@ void MainWindow::setupUI()
     auto btnPrev   = new QPushButton("<");
     auto btnNext   = new QPushButton(">");
     auto btnEnd    = new QPushButton(">|");
-    auto btnPlay   = new QPushButton("Play");
+    auto btnPlay   = new QPushButton("Reproducir");
 
     connect(btnStart, &QPushButton::clicked, this, &MainWindow::onStartGame);
     connect(btnPrev,  &QPushButton::clicked, this, &MainWindow::onPreviousMove);
@@ -115,7 +117,7 @@ void MainWindow::setupUI()
     centerLayout->addLayout(navLayout);
     centerLayout->addWidget(moveListWidget);
 
-    auto openButton = new QPushButton("Open PGN");
+    auto openButton = new QPushButton("Abrir PGN");
     connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenPGN);
     centerLayout->addWidget(openButton);
 
@@ -124,7 +126,7 @@ void MainWindow::setupUI()
     // Panel derecho: barra de evaluación + sidebar análisis
     auto rightPanel  = new QWidget();
     auto rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->addWidget(new QLabel("Evaluation"));
+    rightLayout->addWidget(new QLabel("Evaluación"));
     rightLayout->addWidget(evaluationBarWidget);
     rightLayout->addWidget(analysisSidebar);
     mainLayout->addWidget(rightPanel, 1);
@@ -268,21 +270,21 @@ void MainWindow::onMoveRequested(const chess::Move& move)
 void MainWindow::onOpenPGN()
 {
     QString fileName = QFileDialog::getOpenFileName(
-        this, "Open PGN File", "", "PGN Files (*.pgn)");
+        this, "Abrir partida PGN", "", "Archivos PGN (*.pgn)");
     if (fileName.isEmpty())
         return;
 
     chess::PGNParser parser;
     auto games = parser.parseFile(fileName);
     if (games.empty()) {
-        QMessageBox::warning(this, "PGN", "No valid games found in file.");
+        QMessageBox::warning(this, "PGN", "No se encontraron partidas válidas en el archivo.");
         return;
     }
 
     const chess::Game& game  = games.front();
     const auto&        moves = game.getMoves();
     if (moves.empty()) {
-        QMessageBox::warning(this, "PGN", "Game has no moves.");
+        QMessageBox::warning(this, "PGN", "La partida no contiene movimientos.");
         return;
     }
 
@@ -303,8 +305,8 @@ void MainWindow::onOpenPGN()
         analysisSidebar->setEngineAnalysis("Starting analysis...");
         analysisService->analyzeGame(gameBoardStates, moves, Config::STOCKFISH_DEPTH);
     } else {
-        analysisSidebar->setEngineAnalysis(
-            "Stockfish not ready.\nMake sure bin/stockfish.exe exists.");
+        m_pendingMoves = moves;
+        analysisSidebar->setEngineAnalysis("Waiting for Stockfish...");
     }
 }
 
@@ -322,9 +324,9 @@ void MainWindow::onExportPDF()
 
     if (ok) {
         QMessageBox::information(this, "PDF exportado",
-                                 "El análisis fue exportado correctamente:\n" + fileName);
+                                 "El análisis se exportó correctamente a:\n" + fileName);
     } else {
-        QMessageBox::warning(this, "Error", "No se pudo crear el archivo PDF.");
+        QMessageBox::warning(this, "Error al exportar", "No se pudo crear el archivo PDF.");
     }
 }
 
@@ -345,7 +347,7 @@ void MainWindow::onPlayPause()
 void MainWindow::onLoginRequested(const QString& username, const QString& password)
 {
     if (username.isEmpty() || password.isEmpty()) {
-        QMessageBox::warning(this, "Error", "Please enter username and password");
+        QMessageBox::warning(this, "Error", "Ingresá usuario y contraseña.");
         return;
     }
     authService->login(username, password);
@@ -360,7 +362,7 @@ void MainWindow::onLoginSuccess(const UserData& user)
 
 void MainWindow::onLoginFailed(const QString& error)
 {
-    QMessageBox::warning(this, "Login failed", error);
+    QMessageBox::warning(this, "Error al iniciar sesión", error);
 }
 
 void MainWindow::onRegisterSuccess()
@@ -467,13 +469,19 @@ void MainWindow::onMatchSelectedFromStats(int matchId)
 
 void MainWindow::onEngineReady()
 {
-    analysisSidebar->setEngineAnalysis("Stockfish ready.\nOpen a PGN to start analysis.");
+    if (!m_pendingMoves.empty()) {
+        analysisSidebar->setEngineAnalysis("Iniciando análisis...");
+        analysisService->analyzeGame(gameBoardStates, m_pendingMoves, Config::STOCKFISH_DEPTH);
+        m_pendingMoves.clear();
+    } else {
+        analysisSidebar->setEngineAnalysis("Stockfish listo.\nAbrí un PGN para analizar.");
+    }
 }
 
 void MainWindow::onAnalysisProgress(int current, int total)
 {
     analysisSidebar->setEngineAnalysis(
-        QString("Analyzing move %1 / %2...").arg(current + 1).arg(total));
+        QString("Analizando jugada %1 de %2...").arg(current + 1).arg(total));
 }
 
 void MainWindow::onMoveAnalyzed(int moveIndex, MoveAnalysis analysis)
@@ -491,21 +499,21 @@ void MainWindow::onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore
     m_currentAnalysis = results;
 
     QString summary;
-    summary += "=== Analysis Complete ===\n\n";
-    summary += QString("White accuracy : %1%\n").arg(accuracy.white, 0, 'f', 1);
-    summary += QString("Black accuracy : %1%\n").arg(accuracy.black, 0, 'f', 1);
-    summary += QString("White blunders : %1  mistakes: %2\n")
+    summary += "=== Análisis completo ===\n\n";
+    summary += QString("Precisión Blancas : %1%\n").arg(accuracy.white, 0, 'f', 1);
+    summary += QString("Precisión Negras  : %1%\n").arg(accuracy.black, 0, 'f', 1);
+    summary += QString("Blunders Blancas  : %1  Errores: %2\n")
                     .arg(accuracy.whiteBlunders).arg(accuracy.whiteMistakes);
-    summary += QString("Black blunders : %1  mistakes: %2\n")
+    summary += QString("Blunders Negras   : %1  Errores: %2\n")
                     .arg(accuracy.blackBlunders).arg(accuracy.blackMistakes);
-    summary += "\n--- By phase (White) ---\n";
-    summary += QString("Opening  : %1%\n").arg(accuracy.whiteOpening, 0, 'f', 1);
-    summary += QString("Midgame  : %1%\n").arg(accuracy.whiteMidgame, 0, 'f', 1);
-    summary += QString("Endgame  : %1%\n").arg(accuracy.whiteEndgame, 0, 'f', 1);
-    summary += "--- By phase (Black) ---\n";
-    summary += QString("Opening  : %1%\n").arg(accuracy.blackOpening, 0, 'f', 1);
-    summary += QString("Midgame  : %1%\n").arg(accuracy.blackMidgame, 0, 'f', 1);
-    summary += QString("Endgame  : %1%\n").arg(accuracy.blackEndgame, 0, 'f', 1);
+    summary += "\n--- Por fase (Blancas) ---\n";
+    summary += QString("Apertura : %1%\n").arg(accuracy.whiteOpening, 0, 'f', 1);
+    summary += QString("Medio    : %1%\n").arg(accuracy.whiteMidgame, 0, 'f', 1);
+    summary += QString("Final    : %1%\n").arg(accuracy.whiteEndgame, 0, 'f', 1);
+    summary += "--- Por fase (Negras) ---\n";
+    summary += QString("Apertura : %1%\n").arg(accuracy.blackOpening, 0, 'f', 1);
+    summary += QString("Medio    : %1%\n").arg(accuracy.blackMidgame, 0, 'f', 1);
+    summary += QString("Final    : %1%\n").arg(accuracy.blackEndgame, 0, 'f', 1);
 
     analysisSidebar->setEngineAnalysis(summary);
     showMoveAnalysis(gameManager->getCurrentMoveIndex());
@@ -523,14 +531,14 @@ void MainWindow::showMoveAnalysis(int index)
     evaluationBarWidget->updateEval(ma.evalBefore);
 
     QString text;
-    text += QString("Move %1\n").arg(index + 1);
-    text += QString("Classification : %1\n")
+    text += QString("Jugada %1\n").arg(index + 1);
+    text += QString("Clasificación : %1\n")
                 .arg(MoveAnalysis::classificationToString(ma.classification));
-    text += QString("Best move      : %1\n").arg(ma.bestMove);
-    text += QString("Eval           : %1 cp\n").arg(ma.evalBefore);
-    text += QString("Delta          : %1 cp\n").arg(ma.delta);
+    text += QString("Mejor jugada  : %1\n").arg(ma.bestMove);
+    text += QString("Evaluación    : %1 cp\n").arg(ma.evalBefore);
+    text += QString("Delta         : %1 cp\n").arg(ma.delta);
     if (!ma.pv.isEmpty())
-        text += "Line: " + ma.pv.join(" ");
+        text += "Línea: " + ma.pv.join(" ");
 
     analysisSidebar->setEngineAnalysis(text);
 }

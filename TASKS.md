@@ -267,7 +267,7 @@
 - [x] Calcular precisión por jugador con fórmula exponencial (modelo lichess)
 - [x] Desglosar por fase: apertura (jugadas 1–10), medio juego (11–30), final (31+)
 - [x] Exponer métricas vía signal `analysisComplete(..., AccuracyScore)`
-- [ ] Conectar `AnalysisService` a `MainWindow` / `AnalysisSidebarWidget`
+- [x] Conectar `AnalysisService` a `MainWindow` / `AnalysisSidebarWidget`
 
 ---
 

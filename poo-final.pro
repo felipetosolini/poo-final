@@ -72,3 +72,17 @@ RESOURCES += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# Copiar stockfish.exe al directorio del ejecutable en cada build (Windows)
+win32 {
+    CONFIG(debug, debug|release): EXEDIR = $$OUT_PWD/debug
+    else: EXEDIR = $$OUT_PWD/release
+
+    copyStockfish.target   = copy_stockfish
+    copyStockfish.commands = \
+        -$(MKDIR) $$shell_path($$EXEDIR/bin) $$escape_expand(\n\t) \
+        -$(COPY_FILE) $$shell_path($$PWD/bin/stockfish.exe) $$shell_path($$EXEDIR/bin/stockfish.exe)
+
+    QMAKE_EXTRA_TARGETS += copyStockfish
+    PRE_TARGETDEPS      += copy_stockfish
+}

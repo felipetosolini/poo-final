@@ -2,6 +2,9 @@
 
 #include <QString>
 #include <QVector>
+#include <QPainter>
+#include <QRect>
+#include <QColor>
 #include "analysisdata.h"
 #include "chess/game.h"
 #include "chess/move.h"

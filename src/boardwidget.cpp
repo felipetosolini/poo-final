@@ -42,13 +42,21 @@ void BoardWidget::setValidMoves(const std::vector<chess::Move>& moves) {
 }
 
 void BoardWidget::loadPiecePixmaps() {
-    // Cargar SVGs de piezas desde recursos
-    // Por ahora usamos colores sólidos para prototipo
-    // TODO: reemplazar con SVGs reales
-    for (int color = 0; color < 2; color++) {
-        for (int piece = 0; piece < 6; piece++) {
-            piecePixmaps[color][piece] = QPixmap(64, 64);
-            piecePixmaps[color][piece].fill(Qt::transparent);
+    const char* prefixes[2] = {"w", "b"};
+    const char* suffixes[6] = {"P", "N", "B", "R", "Q", "K"};
+
+    for (int c = 0; c < 2; ++c) {
+        for (int t = 0; t < 6; ++t) {
+            const QString path = QString(":/pieces/%1%2.svg")
+                                     .arg(prefixes[c]).arg(suffixes[t]);
+            QSvgRenderer renderer(path);
+            QPixmap pm(128, 128);
+            pm.fill(Qt::transparent);
+            if (renderer.isValid()) {
+                QPainter p(&pm);
+                renderer.render(&p);
+            }
+            piecePixmaps[c][t] = pm;
         }
     }
 }
@@ -148,17 +156,12 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
             // Dibujar pieza
             chess::Piece* piece = board.getPiece(row, col);
             if (piece && !(isDragging && row == selectedRow && col == selectedCol)) {
-                QString symbol = piece->getSymbol();
-                painter.setFont(QFont("Arial", 32, QFont::Bold));
-                
-                QColor pieceColor = (piece->getColor() == chess::PieceColor::White) 
-                                     ? Qt::white : Qt::black;
-                painter.setPen(pieceColor);
-                painter.drawText(topLeft.x(), topLeft.y(), squareSize, squareSize,
-                                Qt::AlignCenter, symbol);
-                
-                painter.setPen(Qt::black);
-                painter.setFont(QFont());
+                const QPixmap& pm = getPiecePixmap(piece);
+                if (!pm.isNull()) {
+                    painter.drawPixmap(
+                        QRect(topLeft.x(), topLeft.y(), squareSize, squareSize),
+                        pm, pm.rect());
+                }
             }
         }
     }
@@ -185,18 +188,11 @@ void BoardWidget::mousePressEvent(QMouseEvent *event) {
             selectedRow = row;
             selectedCol = col;
             isDragging = true;
-            
-            // Crear pixmap para arrastrar
-            draggedPiece = QPixmap(squareSize, squareSize);
-            draggedPiece.fill(Qt::transparent);
-            QPainter dragPainter(&draggedPiece);
-            dragPainter.setFont(QFont("Arial", 32, QFont::Bold));
-            QColor color = (piece->getColor() == chess::PieceColor::White) 
-                           ? Qt::white : Qt::black;
-            dragPainter.setPen(color);
-            dragPainter.drawText(0, 0, squareSize, squareSize,
-                                Qt::AlignCenter, piece->getSymbol());
-            
+
+            const QPixmap& pm = getPiecePixmap(piece);
+            draggedPiece = pm.scaled(squareSize, squareSize,
+                                     Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
             emit squareClicked(row, col);
         } else {
             clearSelection();
@@ -208,7 +204,7 @@ void BoardWidget::mousePressEvent(QMouseEvent *event) {
 
 void BoardWidget::mouseMoveEvent(QMouseEvent *event) {
     if (!isDragging || selectedRow < 0) return;
-    // Solo actualizar cursor visual
+    update();
 }
 
 void BoardWidget::mouseReleaseEvent(QMouseEvent *event) {

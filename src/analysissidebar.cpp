@@ -13,12 +13,12 @@ AnalysisSidebarWidget::AnalysisSidebarWidget(QWidget *parent)
     // Pestaña 1: Motor
     engineAnalysisEdit = new QTextEdit();
     engineAnalysisEdit->setReadOnly(true);
-    tabWidget->addTab(engineAnalysisEdit, "Engine Analysis");
-    
+    tabWidget->addTab(engineAnalysisEdit, "Motor");
+
     // Pestaña 2: IA
     aiExplanationEdit = new QTextEdit();
     aiExplanationEdit->setReadOnly(true);
-    tabWidget->addTab(aiExplanationEdit, "AI Explanation");
+    tabWidget->addTab(aiExplanationEdit, "Explicación IA");
     
     mainLayout->addWidget(tabWidget);
 }
