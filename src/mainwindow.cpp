@@ -82,25 +82,67 @@ void MainWindow::setupUI()
 {
     auto centralWidget = new QWidget(this);
     auto mainLayout    = new QHBoxLayout(centralWidget);
+    mainLayout->setContentsMargins(8, 8, 8, 8);
+    mainLayout->setSpacing(8);
 
-    // Panel izquierdo: tablero + piezas capturadas
+    // ── Panel izquierdo: tablero + piezas capturadas ──────────────────────────
     auto leftPanel  = new QWidget();
+    leftPanel->setObjectName("leftPanel");
     auto leftLayout = new QVBoxLayout(leftPanel);
-    leftLayout->addWidget(new QLabel("Tablero"));
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(4);
     leftLayout->addWidget(boardWidget, 1);
     leftLayout->addWidget(capturedPiecesWidget);
-    mainLayout->addWidget(leftPanel, 2);
+    mainLayout->addWidget(leftPanel, 3);
 
-    // Panel central: navegación + lista de movimientos
+    // ── Panel central: lista de movimientos + navegación ─────────────────────
     auto centerPanel  = new QWidget();
+    centerPanel->setObjectName("sidePanel");
+    centerPanel->setMinimumWidth(160);
+    centerPanel->setMaximumWidth(220);
     auto centerLayout = new QVBoxLayout(centerPanel);
+    centerLayout->setContentsMargins(4, 4, 4, 4);
+    centerLayout->setSpacing(6);
 
+    auto movesLabel = new QLabel("MOVIMIENTOS");
+    movesLabel->setObjectName("sectionLabel");
+    movesLabel->setStyleSheet("color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;");
+    centerLayout->addWidget(movesLabel);
+    centerLayout->addWidget(moveListWidget, 1);
+
+    // Botones de navegación
     auto navLayout = new QHBoxLayout();
-    auto btnStart  = new QPushButton("|<");
-    auto btnPrev   = new QPushButton("<");
-    auto btnNext   = new QPushButton(">");
-    auto btnEnd    = new QPushButton(">|");
-    auto btnPlay   = new QPushButton("Reproducir");
+    navLayout->setSpacing(3);
+    auto btnStart = new QPushButton("|<");
+    auto btnPrev  = new QPushButton("<");
+    auto btnNext  = new QPushButton(">");
+    auto btnEnd   = new QPushButton(">|");
+    btnStart->setObjectName("navButton");
+    btnPrev->setObjectName("navButton");
+    btnNext->setObjectName("navButton");
+    btnEnd->setObjectName("navButton");
+    btnStart->setToolTip("Inicio (Home)");
+    btnPrev->setToolTip("Jugada anterior (←)");
+    btnNext->setToolTip("Jugada siguiente (→)");
+    btnEnd->setToolTip("Final (End)");
+    navLayout->addWidget(btnStart);
+    navLayout->addWidget(btnPrev);
+    navLayout->addWidget(btnNext);
+    navLayout->addWidget(btnEnd);
+    centerLayout->addLayout(navLayout);
+
+    auto btnPlay = new QPushButton("▶  Reproducir");
+    btnPlay->setObjectName("secondaryButton");
+    centerLayout->addWidget(btnPlay);
+
+    auto openButton = new QPushButton("Abrir PGN");
+    connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenPGN);
+    centerLayout->addWidget(openButton);
+
+    auto exportButton = new QPushButton("Exportar PDF");
+    exportButton->setObjectName("secondaryButton");
+    connect(exportButton, &QPushButton::clicked, this, &MainWindow::onExportPDF);
+    centerLayout->addWidget(exportButton);
 
     connect(btnStart, &QPushButton::clicked, this, &MainWindow::onStartGame);
     connect(btnPrev,  &QPushButton::clicked, this, &MainWindow::onPreviousMove);
@@ -108,28 +150,29 @@ void MainWindow::setupUI()
     connect(btnEnd,   &QPushButton::clicked, this, &MainWindow::onEndGame);
     connect(btnPlay,  &QPushButton::clicked, this, &MainWindow::onPlayPause);
 
-    navLayout->addWidget(btnStart);
-    navLayout->addWidget(btnPrev);
-    navLayout->addWidget(btnNext);
-    navLayout->addWidget(btnEnd);
-    navLayout->addWidget(btnPlay);
+    mainLayout->addWidget(centerPanel);
 
-    centerLayout->addLayout(navLayout);
-    centerLayout->addWidget(moveListWidget);
-
-    auto openButton = new QPushButton("Abrir PGN");
-    connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenPGN);
-    centerLayout->addWidget(openButton);
-
-    mainLayout->addWidget(centerPanel, 1);
-
-    // Panel derecho: barra de evaluación + sidebar análisis
+    // ── Panel derecho: barra de evaluación + análisis ─────────────────────────
     auto rightPanel  = new QWidget();
+    rightPanel->setObjectName("sidePanel");
+    rightPanel->setMinimumWidth(280);
     auto rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->addWidget(new QLabel("Evaluación"));
-    rightLayout->addWidget(evaluationBarWidget);
-    rightLayout->addWidget(analysisSidebar);
-    mainLayout->addWidget(rightPanel, 1);
+    rightLayout->setContentsMargins(4, 4, 4, 4);
+    rightLayout->setSpacing(6);
+
+    auto analysisLabel = new QLabel("ANÁLISIS");
+    analysisLabel->setStyleSheet("color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;");
+    rightLayout->addWidget(analysisLabel);
+
+    // Barra de evaluación a la izquierda, sidebar a la derecha
+    auto analysisSplit = new QHBoxLayout();
+    analysisSplit->setSpacing(6);
+    evaluationBarWidget->setFixedWidth(36);
+    analysisSplit->addWidget(evaluationBarWidget);
+    analysisSplit->addWidget(analysisSidebar, 1);
+    rightLayout->addLayout(analysisSplit, 1);
+
+    mainLayout->addWidget(rightPanel, 2);
 
     setCentralWidget(centralWidget);
 
@@ -203,6 +246,11 @@ void MainWindow::setupConnections()
             this, &MainWindow::onMoveAnalyzed);
     connect(analysisService, &AnalysisService::analysisComplete,
             this, &MainWindow::onAnalysisComplete);
+
+    // Reproducción automática
+    playTimer = new QTimer(this);
+    playTimer->setInterval(playbackSpeed);
+    connect(playTimer, &QTimer::timeout, this, &MainWindow::onNextMove);
 }
 
 void MainWindow::setupShortcuts()
@@ -220,14 +268,7 @@ void MainWindow::setupShortcuts()
 
 void MainWindow::applyStyles()
 {
-    setStyleSheet(R"(
-        QWidget            { background-color: #f5f5f5; color: #333333; }
-        QPushButton        { background-color: #4CAF50; color: white; border: none;
-                             border-radius: 4px; padding: 8px 16px; font-weight: bold; }
-        QPushButton:hover  { background-color: #45a049; }
-        QPushButton:pressed{ background-color: #3d8b40; }
-        QLineEdit, QTextEdit { border: 1px solid #cccccc; border-radius: 4px; padding: 5px; }
-    )");
+    // El stylesheet global se carga desde :/styles.qss en main.cpp
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -245,12 +286,17 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 void MainWindow::onBoardUpdated(const chess::Board& board)
 {
     boardWidget->setBoard(board);
+    capturedPiecesWidget->updateFromBoard(board);
 }
 
 void MainWindow::onMoveNavigated(int index)
 {
     moveListWidget->setCurrentMove(index);
     showMoveAnalysis(index);
+    if (isPlaying && index >= gameManager->getTotalMoves() - 1) {
+        isPlaying = false;
+        playTimer->stop();
+    }
 }
 
 // ── Slots de BoardWidget ──────────────────────────────────────────────────────
@@ -297,9 +343,13 @@ void MainWindow::onOpenPGN()
 
     gameManager->goToMove(-1);
 
-    gameBoardStates = buildBoardStates(moves);
+    gameBoardStates = game.getBoardStates();
     m_currentAnalysis.clear();
+    m_analysisSummary.clear();
     analysisSidebar->clear();
+    boardWidget->setInteractive(false);
+    isPlaying = false;
+    playTimer->stop();
 
     if (stockfishEngine->isReady()) {
         analysisSidebar->setEngineAnalysis("Starting analysis...");
@@ -339,7 +389,9 @@ void MainWindow::onPlayPause()
 {
     isPlaying = !isPlaying;
     if (isPlaying)
-        QTimer::singleShot(playbackSpeed, this, &MainWindow::onNextMove);
+        playTimer->start();
+    else
+        playTimer->stop();
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -515,7 +567,7 @@ void MainWindow::onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore
     summary += QString("Medio    : %1%\n").arg(accuracy.blackMidgame, 0, 'f', 1);
     summary += QString("Final    : %1%\n").arg(accuracy.blackEndgame, 0, 'f', 1);
 
-    analysisSidebar->setEngineAnalysis(summary);
+    m_analysisSummary = summary;
     showMoveAnalysis(gameManager->getCurrentMoveIndex());
 }
 
@@ -523,8 +575,11 @@ void MainWindow::onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore
 
 void MainWindow::showMoveAnalysis(int index)
 {
-    if (index < 0 || index >= m_currentAnalysis.size())
+    if (index < 0 || index >= m_currentAnalysis.size()) {
+        if (!m_analysisSummary.isEmpty())
+            analysisSidebar->setEngineAnalysis(m_analysisSummary);
         return;
+    }
 
     const MoveAnalysis& ma = m_currentAnalysis[index];
 
@@ -540,23 +595,8 @@ void MainWindow::showMoveAnalysis(int index)
     if (!ma.pv.isEmpty())
         text += "Línea: " + ma.pv.join(" ");
 
+    if (!m_analysisSummary.isEmpty())
+        text += "\n\n" + m_analysisSummary;
+
     analysisSidebar->setEngineAnalysis(text);
-}
-
-std::vector<chess::Board> MainWindow::buildBoardStates(const std::vector<chess::Move>& moves)
-{
-    std::vector<chess::Board> boards;
-    boards.reserve(moves.size());
-
-    chess::Board board;
-    board.initStandardPosition();
-
-    for (const auto& mv : moves) {
-        boards.push_back(board);
-        board.movePiece(mv.getFromRow(), mv.getFromCol(),
-                        mv.getToRow(),   mv.getToCol());
-        board.switchTurn();
-    }
-
-    return boards;
 }

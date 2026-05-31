@@ -107,7 +107,7 @@ Game PGNParser::parseSingleGame(const QString& headerBlock, const QString& moveB
     Board board;
     board.initStandardPosition();
 
-    for (const Move& move : parseMoves(moveBlock, board))
+    for (const Move& move : parseMoves(moveBlock, board, game))
         game.addMove(move);
 
     return game;
@@ -136,7 +136,7 @@ GameMetadata PGNParser::parseHeaders(const QString& headerBlock) const {
     return meta;
 }
 
-std::vector<Move> PGNParser::parseMoves(const QString& moveText, Board& board) const {
+std::vector<Move> PGNParser::parseMoves(const QString& moveText, Board& board, Game& game) const {
     std::vector<Move> moves;
 
     QString cleaned = removeVariationsAndComments(moveText);
@@ -151,14 +151,23 @@ std::vector<Move> PGNParser::parseMoves(const QString& moveText, Board& board) c
     for (const QString& token : tokens) {
         if (moveNumRx.match(token).hasMatch()) continue;
         if (resultRx.match(token).hasMatch())  continue;
-        if (token.startsWith('$'))             continue; // NAG annotation
+        if (token.startsWith('$'))             continue;
 
         SanMove san = parseSAN(token);
         if (san.toRow == -1 && !san.isKingsideCastle && !san.isQueensideCastle)
-            continue; // no se pudo parsear (anotación, etc.)
+            continue;
+
+        // Snapshot ANTES del movimiento — es la posición que Stockfish analizará
+        game.addBoardState(board);
 
         Move move = resolveMove(board, san, currentColor);
-        applyMoveToBoard(board, move, san, currentColor);
+        if (move.getFromRow() >= 0) {
+            applyMoveToBoard(board, move, san, currentColor);
+        } else {
+            // resolveMove no encontró la pieza origen: avanzar turno sin mover
+            // para no corromper el tablero con coordenadas inválidas.
+            board.switchTurn();
+        }
         moves.push_back(move);
 
         currentColor = (currentColor == PieceColor::White)
@@ -301,10 +310,9 @@ Move PGNParser::resolveMove(const Board& board, const SanMove& san, PieceColor c
         return move;
     }
 
-    // Fallback: coordenadas parciales (no debería ocurrir con PGN válido)
-    return Move(san.fromRow >= 0 ? san.fromRow : 0,
-                san.fromCol >= 0 ? san.fromCol : 0,
-                san.toRow, san.toCol, san.original);
+    // Pieza no encontrada — devolver movimiento inválido (fromRow=-1) para que
+    // parseMoves pueda detectarlo y no corromper el tablero.
+    return Move(-1, -1, san.toRow, san.toCol, san.original);
 }
 
 // ── reglas de movimiento (sin validación de jaque) ────────────────────────────

@@ -5,6 +5,7 @@
 #include <optional>
 #include "move.h"
 #include "player.h"
+#include "board.h"
 
 namespace chess {
 
@@ -30,6 +31,9 @@ public:
     const std::vector<Move>& getMoves() const { return moves; }
     int getMoveCount() const { return static_cast<int>(moves.size()); }
 
+    void addBoardState(const Board& b) { boardStates.push_back(b); }
+    const std::vector<Board>& getBoardStates() const { return boardStates; }
+
     const std::optional<Player>& getWhitePlayer() const { return whitePlayer; }
     const std::optional<Player>& getBlackPlayer() const { return blackPlayer; }
     void setWhitePlayer(const Player& p) { whitePlayer = p; }
@@ -41,6 +45,7 @@ public:
 private:
     GameMetadata metadata;
     std::vector<Move> moves;
+    std::vector<Board> boardStates;
     std::optional<Player> whitePlayer;
     std::optional<Player> blackPlayer;
 };

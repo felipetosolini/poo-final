@@ -16,6 +16,44 @@ Board::~Board() {
     clearBoard();
 }
 
+Board::Board(const Board& other) : currentTurn(other.currentTurn) {
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+            board[i][j] = other.board[i][j] ? other.board[i][j]->clone() : nullptr;
+}
+
+Board& Board::operator=(const Board& other) {
+    if (this != &other) {
+        clearBoard();
+        currentTurn = other.currentTurn;
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                board[i][j] = other.board[i][j] ? other.board[i][j]->clone() : nullptr;
+    }
+    return *this;
+}
+
+Board::Board(Board&& other) noexcept : currentTurn(other.currentTurn) {
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++) {
+            board[i][j] = other.board[i][j];
+            other.board[i][j] = nullptr;
+        }
+}
+
+Board& Board::operator=(Board&& other) noexcept {
+    if (this != &other) {
+        clearBoard();
+        currentTurn = other.currentTurn;
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = other.board[i][j];
+                other.board[i][j] = nullptr;
+            }
+    }
+    return *this;
+}
+
 void Board::clearBoard() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -110,7 +148,6 @@ Piece* Board::capturePiece(int row, int col) {
 }
 
 QString Board::toFen() const {
-    // Implementación simplificada — solo posición, sin castling/en passant/50moves
     QString fen;
     for (int row = 0; row < 8; row++) {
         int emptyCount = 0;
@@ -126,15 +163,30 @@ QString Board::toFen() const {
                 fen += p->getSymbol();
             }
         }
-        if (emptyCount > 0) {
+        if (emptyCount > 0)
             fen += QString::number(emptyCount);
-        }
-        if (row < 7) {
+        if (row < 7)
             fen += "/";
-        }
     }
-    fen += " ";
-    fen += (currentTurn == PieceColor::White) ? "w" : "b";
+
+    fen += (currentTurn == PieceColor::White) ? " w " : " b ";
+
+    // Castling: inferido por presencia de rey y torres en casillas originales
+    QString castling;
+    auto hasOriginal = [&](int r, int c, PieceType t, PieceColor col) {
+        Piece* p = board[r][c];
+        return p && p->getType() == t && p->getColor() == col;
+    };
+    if (hasOriginal(7, 4, PieceType::King, PieceColor::White)) {
+        if (hasOriginal(7, 7, PieceType::Rook, PieceColor::White)) castling += "K";
+        if (hasOriginal(7, 0, PieceType::Rook, PieceColor::White)) castling += "Q";
+    }
+    if (hasOriginal(0, 4, PieceType::King, PieceColor::Black)) {
+        if (hasOriginal(0, 7, PieceType::Rook, PieceColor::Black)) castling += "k";
+        if (hasOriginal(0, 0, PieceType::Rook, PieceColor::Black)) castling += "q";
+    }
+    fen += castling.isEmpty() ? "-" : castling;
+    fen += " - 0 1";
     return fen;
 }
 

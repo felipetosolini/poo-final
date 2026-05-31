@@ -47,4 +47,6 @@ private:
     void send(const QString& command);
     void parseLine(const QString& line);
     void parseInfoLine(const QString& line);
+
+    bool m_shuttingDown = false;
 };

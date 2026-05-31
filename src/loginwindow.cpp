@@ -4,57 +4,70 @@
 #include <QLabel>
 
 LoginWindow::LoginWindow(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent, Qt::Window)
 {
-    setWindowTitle("Chess Insight AI - Login");
-    setMinimumSize(400, 300);
-    
-    auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
-    
+    setWindowTitle("Chess Insight AI");
+    setFixedSize(380, 320);
+
+    auto outer = new QVBoxLayout(this);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->addStretch(1);
+
+    // Contenedor centrado
+    auto card = new QWidget();
+    card->setFixedWidth(300);
+    auto cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(10);
+
     // Título
     auto titleLabel = new QLabel("Chess Insight AI");
-    auto titleFont = titleLabel->font();
-    titleFont.setPointSize(18);
+    QFont titleFont = titleLabel->font();
+    titleFont.setPointSize(16);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
-    mainLayout->addWidget(titleLabel);
-    
-    mainLayout->addSpacing(20);
-    
-    // Usuario
-    auto userLabel = new QLabel("Username:");
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: #d4d4d4;");
+    cardLayout->addWidget(titleLabel);
+
+    auto subtitleLabel = new QLabel("Iniciá sesión para continuar");
+    subtitleLabel->setAlignment(Qt::AlignCenter);
+    subtitleLabel->setStyleSheet("color: #7a7a7a; font-size: 11px;");
+    cardLayout->addWidget(subtitleLabel);
+    cardLayout->addSpacing(8);
+
     usernameEdit = new QLineEdit();
-    usernameEdit->setPlaceholderText("Enter your username");
-    mainLayout->addWidget(userLabel);
-    mainLayout->addWidget(usernameEdit);
-    
-    // Contraseña
-    auto passLabel = new QLabel("Password:");
+    usernameEdit->setPlaceholderText("Usuario");
+    usernameEdit->setMinimumHeight(34);
+    cardLayout->addWidget(usernameEdit);
+
     passwordEdit = new QLineEdit();
     passwordEdit->setEchoMode(QLineEdit::Password);
-    passwordEdit->setPlaceholderText("Enter your password");
-    mainLayout->addWidget(passLabel);
-    mainLayout->addWidget(passwordEdit);
-    
-    mainLayout->addSpacing(20);
-    
-    // Botones
-    auto buttonLayout = new QHBoxLayout();
-    
-    loginButton = new QPushButton("Login");
-    loginButton->setMinimumHeight(40);
+    passwordEdit->setPlaceholderText("Contraseña");
+    passwordEdit->setMinimumHeight(34);
+    connect(passwordEdit, &QLineEdit::returnPressed, this, &LoginWindow::onLoginClicked);
+    cardLayout->addWidget(passwordEdit);
+
+    cardLayout->addSpacing(4);
+
+    loginButton = new QPushButton("Iniciar sesión");
+    loginButton->setMinimumHeight(36);
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::onLoginClicked);
-    buttonLayout->addWidget(loginButton);
-    
-    registerButton = new QPushButton("Register");
-    registerButton->setMinimumHeight(40);
+    cardLayout->addWidget(loginButton);
+
+    registerButton = new QPushButton("Crear cuenta");
+    registerButton->setObjectName("secondaryButton");
+    registerButton->setMinimumHeight(34);
     connect(registerButton, &QPushButton::clicked, this, &LoginWindow::onRegisterClicked);
-    buttonLayout->addWidget(registerButton);
-    
-    mainLayout->addLayout(buttonLayout);
-    mainLayout->addStretch();
+    cardLayout->addWidget(registerButton);
+
+    // Centrar el card
+    auto hCenter = new QHBoxLayout();
+    hCenter->addStretch();
+    hCenter->addWidget(card);
+    hCenter->addStretch();
+    outer->addLayout(hCenter);
+    outer->addStretch(1);
 }
 
 void LoginWindow::onLoginClicked() {

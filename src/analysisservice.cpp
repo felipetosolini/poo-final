@@ -1,5 +1,6 @@
 #include "analysisservice.h"
 #include "stockfishengine.h"
+#include <QTimer>
 #include <cmath>
 
 AnalysisService::AnalysisService(StockfishEngine* engine, QObject *parent)
@@ -45,12 +46,13 @@ void AnalysisService::cancelAnalysis()
 
 void AnalysisService::onEvalUpdated(int cp)
 {
-    // Guardamos la última evaluación recibida (la de mayor profundidad)
+    if (!m_running) return;
     m_bestEval = cp;
 }
 
 void AnalysisService::onPvUpdated(QStringList pv)
 {
+    if (!m_running) return;
     m_pv = pv;
     if (!pv.isEmpty())
         m_bestMove = pv.first();
@@ -58,11 +60,9 @@ void AnalysisService::onPvUpdated(QStringList pv)
 
 void AnalysisService::onBestMoveFound(QString move)
 {
-    // "bestmove" llega cuando el motor termina de analizar la posición actual.
-    // En este punto m_bestEval ya tiene la evaluación final.
+    if (!m_running) return;
     if (m_bestMove.isEmpty())
         m_bestMove = move;
-
     onPositionDone();
 }
 
@@ -70,6 +70,8 @@ void AnalysisService::onBestMoveFound(QString move)
 
 void AnalysisService::analyzeNext()
 {
+    if (!m_running) return;
+
     if (m_cancelled || m_currentIndex >= static_cast<int>(m_boards.size())) {
         m_running = false;
         if (m_cancelled) {
@@ -86,8 +88,22 @@ void AnalysisService::analyzeNext()
     m_bestMove.clear();
     m_pv.clear();
 
-    // Enviar posición y arrancar análisis
     QString fen = m_boards[m_currentIndex].toFen();
+
+    // Validar que el FEN tenga ambos reyes antes de enviarlo a Stockfish.
+    // Un FEN sin rey crashea el proceso de Stockfish.
+    auto fenHasBothKings = [](const QString& f) {
+        int space = f.indexOf(' ');
+        QString pos = space >= 0 ? f.left(space) : f;
+        return pos.contains('K') && pos.contains('k');
+    };
+    if (!fenHasBothKings(fen)) {
+        // Posición inválida — saltar sin analizar
+        m_currentIndex++;
+        QTimer::singleShot(0, this, &AnalysisService::analyzeNext);
+        return;
+    }
+
     m_engine->setPosition(fen);
     m_engine->analyze(m_depth);
 
@@ -142,7 +158,9 @@ void AnalysisService::onPositionDone()
     emit moveAnalyzed(idx, ma);
 
     m_currentIndex++;
-    analyzeNext();
+    // Defer to next event loop tick so we're not writing to Stockfish's stdin
+    // from within the readyReadStandardOutput handler (avoids ordering issues on Windows).
+    QTimer::singleShot(0, this, &AnalysisService::analyzeNext);
 }
 
 MoveClassification AnalysisService::classify(int delta) const

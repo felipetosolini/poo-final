@@ -23,6 +23,12 @@ void BoardWidget::setBoard(const chess::Board& b) {
     update();
 }
 
+void BoardWidget::setInteractive(bool interactive) {
+    m_interactive = interactive;
+    if (!interactive)
+        clearSelection();
+}
+
 void BoardWidget::clearSelection() {
     selectedRow = selectedCol = -1;
     validMoves.clear();
@@ -95,22 +101,25 @@ QPixmap BoardWidget::getPiecePixmap(const chess::Piece* piece) const {
 }
 
 void BoardWidget::drawCoordinates(QPainter& painter) {
-    painter.setFont(QFont("Arial", 10));
-    painter.setPen(Qt::black);
-    
-    // Letras a-h (columnas)
-    for (int col = 0; col < 8; col++) {
-        QString letter = QString(QChar('a' + col));
-        QPoint pos = boardToScreen(7, col);
-        painter.drawText(pos.x() + squareSize - 15, boardY + height() + 10,
-                         letter);
-    }
-    
-    // Números 8-1 (filas)
+    QFont coordFont("Segoe UI", 8, QFont::Bold);
+    painter.setFont(coordFont);
+
+    // Números 8-1: esquina superior-izquierda de la columna a
     for (int row = 0; row < 8; row++) {
-        QString number = QString::number(8 - row);
-        QPoint pos = boardToScreen(row, 0);
-        painter.drawText(boardX - 20, pos.y() + 15, number);
+        QPoint topLeft = boardToScreen(row, 0);
+        bool isLight = (row % 2) == 0;
+        painter.setPen(isLight ? QColor(181, 136, 99) : QColor(240, 217, 181));
+        painter.drawText(topLeft.x() + 3, topLeft.y() + 13, QString::number(8 - row));
+    }
+
+    // Letras a-h: esquina inferior-derecha de la fila 8 (row 7)
+    for (int col = 0; col < 8; col++) {
+        QPoint topLeft = boardToScreen(7, col);
+        bool isLight = ((7 + col) % 2) == 0;
+        painter.setPen(isLight ? QColor(181, 136, 99) : QColor(240, 217, 181));
+        painter.drawText(topLeft.x() + squareSize - 11,
+                         topLeft.y() + squareSize - 4,
+                         QString(QChar('a' + col)));
     }
 }
 
@@ -178,6 +187,7 @@ void BoardWidget::paintEvent(QPaintEvent *event) {
 
 void BoardWidget::mousePressEvent(QMouseEvent *event) {
     if (event->button() != Qt::LeftButton) return;
+    if (!m_interactive) return;
     
     auto [row, col] = screenToBoard(event->pos());
     

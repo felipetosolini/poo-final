@@ -31,7 +31,7 @@ private:
 
     Game parseSingleGame(const QString& headerBlock, const QString& moveBlock);
     GameMetadata parseHeaders(const QString& headerBlock) const;
-    std::vector<Move> parseMoves(const QString& moveText, Board& board) const;
+    std::vector<Move> parseMoves(const QString& moveText, Board& board, Game& game) const;
 
     SanMove parseSAN(const QString& token) const;
     Move resolveMove(const Board& board, const SanMove& san, PieceColor color) const;

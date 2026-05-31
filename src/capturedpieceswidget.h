@@ -1,8 +1,9 @@
 #pragma once
 
 #include <QWidget>
-#include <vector>
-#include "chess/piece.h"
+#include <QString>
+#include <QVector>
+#include "chess/board.h"
 
 class CapturedPiecesWidget : public QWidget {
     Q_OBJECT
@@ -10,13 +11,13 @@ class CapturedPiecesWidget : public QWidget {
 public:
     explicit CapturedPiecesWidget(QWidget *parent = nullptr);
 
-    void addCapturedPiece(const chess::Piece* piece);
-    void clearCapturedPieces();
+    void updateFromBoard(const chess::Board& board);
+    void clear();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    std::vector<chess::Piece*> capturedWhite;
-    std::vector<chess::Piece*> capturedBlack;
+    QVector<QString> capturedByBlack;  // white pieces taken by black
+    QVector<QString> capturedByWhite;  // black pieces taken by white
 };

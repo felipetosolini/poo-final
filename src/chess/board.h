@@ -10,6 +10,10 @@ class Board {
 public:
     Board();
     ~Board();
+    Board(const Board& other);
+    Board& operator=(const Board& other);
+    Board(Board&& other) noexcept;
+    Board& operator=(Board&& other) noexcept;
 
     // Inicializar posición estándar
     void initStandardPosition();

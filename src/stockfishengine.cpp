@@ -37,6 +37,7 @@ bool StockfishEngine::start(const QString& executablePath)
 
 void StockfishEngine::shutdown()
 {
+    m_shuttingDown = true;
     if (m_process->state() == QProcess::Running) {
         send("quit");
         m_process->waitForFinished(2000);
@@ -162,6 +163,8 @@ void StockfishEngine::parseInfoLine(const QString& line)
 
 void StockfishEngine::onProcessError(QProcess::ProcessError error)
 {
+    if (m_shuttingDown)
+        return;
     Q_UNUSED(error)
     emit engineError("Error en proceso Stockfish: " + m_process->errorString());
 }

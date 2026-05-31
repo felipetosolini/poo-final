@@ -19,6 +19,8 @@ public:
     void setBoard(const chess::Board& b);
     chess::Board getBoard() const { return board; }
 
+    void setInteractive(bool interactive);
+
     // Selección y movimientos válidos
     void clearSelection();
     void highlightSquare(int row, int col, const QColor& color);
@@ -52,6 +54,8 @@ private:
     int squareSize = 0;
     int boardX = 0, boardY = 0;
     
+    bool m_interactive = true;
+
     // Resaltado
     std::vector<chess::Move> validMoves;
     std::map<std::pair<int, int>, QColor> highlights;

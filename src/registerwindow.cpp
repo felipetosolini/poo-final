@@ -6,71 +6,73 @@
 #include <QRegularExpression>
 
 RegisterWindow::RegisterWindow(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent, Qt::Window)
 {
-    setWindowTitle("Chess Insight AI - Register");
-    setMinimumSize(400, 450);
-    
-    auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
-    
-    // Título
-    auto titleLabel = new QLabel("Create New Account");
-    auto titleFont = titleLabel->font();
+    setWindowTitle("Chess Insight AI");
+    setFixedSize(380, 400);
+
+    auto outer = new QVBoxLayout(this);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->addStretch(1);
+
+    auto card = new QWidget();
+    card->setFixedWidth(300);
+    auto cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(8);
+
+    auto titleLabel = new QLabel("Crear cuenta");
+    QFont titleFont = titleLabel->font();
     titleFont.setPointSize(16);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
-    mainLayout->addWidget(titleLabel);
-    
-    mainLayout->addSpacing(15);
-    
-    // Usuario
-    auto userLabel = new QLabel("Username:");
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet("color: #d4d4d4;");
+    cardLayout->addWidget(titleLabel);
+    cardLayout->addSpacing(6);
+
     usernameEdit = new QLineEdit();
-    usernameEdit->setPlaceholderText("Choose a username");
-    mainLayout->addWidget(userLabel);
-    mainLayout->addWidget(usernameEdit);
-    
-    // Email
-    auto emailLabel = new QLabel("Email:");
+    usernameEdit->setPlaceholderText("Usuario (mín. 3 caracteres)");
+    usernameEdit->setMinimumHeight(34);
+    cardLayout->addWidget(usernameEdit);
+
     emailEdit = new QLineEdit();
-    emailEdit->setPlaceholderText("your@email.com");
-    mainLayout->addWidget(emailLabel);
-    mainLayout->addWidget(emailEdit);
-    
-    // Contraseña
-    auto passLabel = new QLabel("Password:");
+    emailEdit->setPlaceholderText("Email");
+    emailEdit->setMinimumHeight(34);
+    cardLayout->addWidget(emailEdit);
+
     passwordEdit = new QLineEdit();
     passwordEdit->setEchoMode(QLineEdit::Password);
-    passwordEdit->setPlaceholderText("At least 8 characters");
-    mainLayout->addWidget(passLabel);
-    mainLayout->addWidget(passwordEdit);
-    
-    // Confirmar contraseña
-    auto confirmLabel = new QLabel("Confirm Password:");
+    passwordEdit->setPlaceholderText("Contraseña (mín. 8 caracteres)");
+    passwordEdit->setMinimumHeight(34);
+    cardLayout->addWidget(passwordEdit);
+
     confirmPasswordEdit = new QLineEdit();
     confirmPasswordEdit->setEchoMode(QLineEdit::Password);
-    mainLayout->addWidget(confirmLabel);
-    mainLayout->addWidget(confirmPasswordEdit);
-    
-    mainLayout->addSpacing(20);
-    
-    // Botones
-    auto buttonLayout = new QHBoxLayout();
-    
-    registerButton = new QPushButton("Register");
-    registerButton->setMinimumHeight(40);
+    confirmPasswordEdit->setPlaceholderText("Confirmar contraseña");
+    confirmPasswordEdit->setMinimumHeight(34);
+    connect(confirmPasswordEdit, &QLineEdit::returnPressed, this, &RegisterWindow::onRegisterClicked);
+    cardLayout->addWidget(confirmPasswordEdit);
+
+    cardLayout->addSpacing(4);
+
+    registerButton = new QPushButton("Registrarse");
+    registerButton->setMinimumHeight(36);
     connect(registerButton, &QPushButton::clicked, this, &RegisterWindow::onRegisterClicked);
-    buttonLayout->addWidget(registerButton);
-    
-    backButton = new QPushButton("Back to Login");
-    backButton->setMinimumHeight(40);
+    cardLayout->addWidget(registerButton);
+
+    backButton = new QPushButton("Volver al login");
+    backButton->setObjectName("secondaryButton");
+    backButton->setMinimumHeight(34);
     connect(backButton, &QPushButton::clicked, this, &RegisterWindow::onBackClicked);
-    buttonLayout->addWidget(backButton);
-    
-    mainLayout->addLayout(buttonLayout);
-    mainLayout->addStretch();
+    cardLayout->addWidget(backButton);
+
+    auto hCenter = new QHBoxLayout();
+    hCenter->addStretch();
+    hCenter->addWidget(card);
+    hCenter->addStretch();
+    outer->addLayout(hCenter);
+    outer->addStretch(1);
 }
 
 bool RegisterWindow::validateInputs() {

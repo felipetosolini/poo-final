@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QShortcut>
+#include <QTimer>
 #include <QVector>
 #include "gamemanager.h"
 #include "boardwidget.h"
@@ -114,8 +115,10 @@ private:
     QShortcut *shortcutNextMove  = nullptr;
 
     // State
-    bool isPlaying     = false;
-    int  playbackSpeed = 1000;
+    bool     isPlaying     = false;
+    int      playbackSpeed = 1000;
+    QTimer  *playTimer     = nullptr;
+    QString  m_analysisSummary;
 
     void setupUI();
     void setupConnections();
@@ -124,5 +127,4 @@ private:
     void showLoginWindow();
     void showMainWindow();
     void showMoveAnalysis(int moveIndex);
-    std::vector<chess::Board> buildBoardStates(const std::vector<chess::Move>& moves);
 };

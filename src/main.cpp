@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     }
 
     MainWindow window;
-    window.show();
+    // La visibilidad la maneja el constructor vía showLoginWindow() / showMainWindow()
 
     return app.exec();
 }

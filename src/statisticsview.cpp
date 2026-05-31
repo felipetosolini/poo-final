@@ -128,56 +128,56 @@ void StatisticsView::paintEvent(QPaintEvent *event)
 
 void StatisticsView::drawAccuracyChart(QPainter& painter, const QRect& rect) const
 {
-    // Fondo
-    painter.fillRect(rect, QColor(248, 248, 248));
-    painter.setPen(QPen(QColor(180, 180, 180)));
+    // Fondo oscuro
+    painter.fillRect(rect, QColor(35, 35, 35));
+    painter.setPen(QPen(QColor(60, 60, 60)));
     painter.drawRect(rect);
 
-    // Líneas de cuadrícula horizontales cada 25 %
+    // Líneas de cuadrícula
     QFont smallFont;
     smallFont.setPointSize(8);
     painter.setFont(smallFont);
 
     for (int pct : {25, 50, 75, 100}) {
         int y = rect.bottom() - static_cast<int>(pct / 100.0 * rect.height());
-        painter.setPen(QPen(QColor(200, 200, 200), 1, Qt::DashLine));
+        painter.setPen(QPen(QColor(55, 55, 55), 1, Qt::DashLine));
         painter.drawLine(rect.left(), y, rect.right(), y);
-        painter.setPen(QPen(Qt::darkGray));
+        painter.setPen(QColor(110, 110, 110));
         painter.drawText(2, y + 4, QString::number(pct) + "%");
     }
 
     if (m_history.isEmpty()) return;
 
-    const int   n         = m_history.size();
-    const double slotW    = static_cast<double>(rect.width()) / n;
-    const double barW     = qMax(3.0, slotW * 0.35);
+    const int    n     = m_history.size();
+    const double slotW = static_cast<double>(rect.width()) / n;
+    const double barW  = qMax(3.0, slotW * 0.35);
 
     for (int i = 0; i < n; ++i) {
         const double cx = rect.left() + slotW * i + slotW * 0.5;
 
-        // Barra blancas (azul)
+        // Barra blancas (verde claro)
         const int hW = static_cast<int>(m_history[i].accuracyWhite / 100.0 * rect.height());
-        const QRect barW_rect(
+        const QRect barWRect(
             static_cast<int>(cx - barW - 1), rect.bottom() - hW,
             static_cast<int>(barW), hW);
-        painter.fillRect(barW_rect, QColor(70, 130, 200, 190));
+        painter.fillRect(barWRect, QColor(118, 150, 86, 220));
 
-        // Barra negras (gris oscuro)
+        // Barra negras (azul apagado)
         const int hB = static_cast<int>(m_history[i].accuracyBlack / 100.0 * rect.height());
-        const QRect barB_rect(
+        const QRect barBRect(
             static_cast<int>(cx + 1), rect.bottom() - hB,
             static_cast<int>(barW), hB);
-        painter.fillRect(barB_rect, QColor(50, 50, 50, 190));
+        painter.fillRect(barBRect, QColor(80, 120, 170, 220));
     }
 
     // Leyenda
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(70, 130, 200, 190));
+    painter.setBrush(QColor(118, 150, 86, 220));
     painter.drawRect(rect.right() - 130, rect.top() + 8, 12, 12);
-    painter.setBrush(QColor(50, 50, 50, 190));
+    painter.setBrush(QColor(80, 120, 170, 220));
     painter.drawRect(rect.right() - 130, rect.top() + 26, 12, 12);
 
-    painter.setPen(Qt::black);
+    painter.setPen(QColor(200, 200, 200));
     painter.drawText(rect.right() - 115, rect.top() + 19, "Blancas");
     painter.drawText(rect.right() - 115, rect.top() + 37, "Negras");
 }
