@@ -120,7 +120,6 @@ private:
     QTimer  *playTimer     = nullptr;
     QString  m_analysisSummary;
 
-    void setupUI();
     void setupConnections();
     void setupShortcuts();
     void applyStyles();

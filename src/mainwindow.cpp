@@ -2,11 +2,7 @@
 #include "ui_mainwindow.h"
 #include "config.h"
 #include "chess/pgnparser.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QWidget>
 #include <QPushButton>
-#include <QLabel>
 #include <QMessageBox>
 #include <QTimer>
 #include <QFileDialog>
@@ -27,15 +23,29 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("Chess Insight AI");
     setMinimumSize(1200, 800);
 
-    // Widgets
-    gameManager          = new GameManager(this);
-    boardWidget          = new BoardWidget(this);
-    moveListWidget       = new MoveListWidget(this);
-    capturedPiecesWidget = new CapturedPiecesWidget(this);
-    evaluationBarWidget  = new EvaluationBarWidget(this);
-    analysisSidebar      = new AnalysisSidebarWidget(this);
-    loginWindow          = new LoginWindow(this);
-    registerWindow       = new RegisterWindow(this);
+    // Asignar widgets del .ui a los punteros miembro
+    boardWidget          = ui->boardWidget;
+    moveListWidget       = ui->moveListWidget;
+    capturedPiecesWidget = ui->capturedPiecesWidget;
+    evaluationBarWidget  = ui->evaluationBarWidget;
+    analysisSidebar      = ui->analysisSidebar;
+
+    // ObjectNames requeridos por styles.qss
+    ui->btnStart->setObjectName("navButton");
+    ui->btnPrev->setObjectName("navButton");
+    ui->btnNext->setObjectName("navButton");
+    ui->btnEnd->setObjectName("navButton");
+    ui->btnPlay->setObjectName("secondaryButton");
+    ui->exportButton->setObjectName("secondaryButton");
+
+    // ObjectNames de paneles usados por estilos
+    ui->centerPanel->setObjectName("sidePanel");
+    ui->rightPanel->setObjectName("sidePanel");
+
+    // Widgets no-UI
+    gameManager    = new GameManager(this);
+    loginWindow    = new LoginWindow(this);
+    registerWindow = new RegisterWindow(this);
 
     // Servicios de red y sesión (Área 3)
     sessionManager      = new SessionManager();
@@ -52,7 +62,6 @@ MainWindow::MainWindow(QWidget *parent)
     stockfishEngine = new StockfishEngine(this);
     analysisService = new AnalysisService(stockfishEngine, this);
 
-    setupUI();
     setupConnections();
     setupShortcuts();
     applyStyles();
@@ -76,119 +85,22 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// ── UI ───────────────────────────────────────────────────────────────────────
-
-void MainWindow::setupUI()
-{
-    auto centralWidget = new QWidget(this);
-    auto mainLayout    = new QHBoxLayout(centralWidget);
-    mainLayout->setContentsMargins(8, 8, 8, 8);
-    mainLayout->setSpacing(8);
-
-    // ── Panel izquierdo: tablero + piezas capturadas ──────────────────────────
-    auto leftPanel  = new QWidget();
-    leftPanel->setObjectName("leftPanel");
-    auto leftLayout = new QVBoxLayout(leftPanel);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->setSpacing(4);
-    leftLayout->addWidget(boardWidget, 1);
-    leftLayout->addWidget(capturedPiecesWidget);
-    mainLayout->addWidget(leftPanel, 3);
-
-    // ── Panel central: lista de movimientos + navegación ─────────────────────
-    auto centerPanel  = new QWidget();
-    centerPanel->setObjectName("sidePanel");
-    centerPanel->setMinimumWidth(160);
-    centerPanel->setMaximumWidth(220);
-    auto centerLayout = new QVBoxLayout(centerPanel);
-    centerLayout->setContentsMargins(4, 4, 4, 4);
-    centerLayout->setSpacing(6);
-
-    auto movesLabel = new QLabel("MOVIMIENTOS");
-    movesLabel->setObjectName("sectionLabel");
-    movesLabel->setStyleSheet("color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;");
-    centerLayout->addWidget(movesLabel);
-    centerLayout->addWidget(moveListWidget, 1);
-
-    // Botones de navegación
-    auto navLayout = new QHBoxLayout();
-    navLayout->setSpacing(3);
-    auto btnStart = new QPushButton("|<");
-    auto btnPrev  = new QPushButton("<");
-    auto btnNext  = new QPushButton(">");
-    auto btnEnd   = new QPushButton(">|");
-    btnStart->setObjectName("navButton");
-    btnPrev->setObjectName("navButton");
-    btnNext->setObjectName("navButton");
-    btnEnd->setObjectName("navButton");
-    btnStart->setToolTip("Inicio (Home)");
-    btnPrev->setToolTip("Jugada anterior (←)");
-    btnNext->setToolTip("Jugada siguiente (→)");
-    btnEnd->setToolTip("Final (End)");
-    navLayout->addWidget(btnStart);
-    navLayout->addWidget(btnPrev);
-    navLayout->addWidget(btnNext);
-    navLayout->addWidget(btnEnd);
-    centerLayout->addLayout(navLayout);
-
-    auto btnPlay = new QPushButton("▶  Reproducir");
-    btnPlay->setObjectName("secondaryButton");
-    centerLayout->addWidget(btnPlay);
-
-    auto openButton = new QPushButton("Abrir PGN");
-    connect(openButton, &QPushButton::clicked, this, &MainWindow::onOpenPGN);
-    centerLayout->addWidget(openButton);
-
-    auto exportButton = new QPushButton("Exportar PDF");
-    exportButton->setObjectName("secondaryButton");
-    connect(exportButton, &QPushButton::clicked, this, &MainWindow::onExportPDF);
-    centerLayout->addWidget(exportButton);
-
-    connect(btnStart, &QPushButton::clicked, this, &MainWindow::onStartGame);
-    connect(btnPrev,  &QPushButton::clicked, this, &MainWindow::onPreviousMove);
-    connect(btnNext,  &QPushButton::clicked, this, &MainWindow::onNextMove);
-    connect(btnEnd,   &QPushButton::clicked, this, &MainWindow::onEndGame);
-    connect(btnPlay,  &QPushButton::clicked, this, &MainWindow::onPlayPause);
-
-    mainLayout->addWidget(centerPanel);
-
-    // ── Panel derecho: barra de evaluación + análisis ─────────────────────────
-    auto rightPanel  = new QWidget();
-    rightPanel->setObjectName("sidePanel");
-    rightPanel->setMinimumWidth(280);
-    auto rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->setContentsMargins(4, 4, 4, 4);
-    rightLayout->setSpacing(6);
-
-    auto analysisLabel = new QLabel("ANÁLISIS");
-    analysisLabel->setStyleSheet("color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;");
-    rightLayout->addWidget(analysisLabel);
-
-    // Barra de evaluación a la izquierda, sidebar a la derecha
-    auto analysisSplit = new QHBoxLayout();
-    analysisSplit->setSpacing(6);
-    evaluationBarWidget->setFixedWidth(36);
-    analysisSplit->addWidget(evaluationBarWidget);
-    analysisSplit->addWidget(analysisSidebar, 1);
-    rightLayout->addLayout(analysisSplit, 1);
-
-    mainLayout->addWidget(rightPanel, 2);
-
-    setCentralWidget(centralWidget);
-
-    // Menú con opción de logout y estadísticas
-    QMenu* userMenu = menuBar()->addMenu("Usuario");
-    QAction* statsAction  = new QAction("Estadísticas", this);
-    QAction* logoutAction = new QAction("Cerrar sesión", this);
-    connect(statsAction,  &QAction::triggered, this, &MainWindow::onShowStatistics);
-    connect(logoutAction, &QAction::triggered, this, &MainWindow::onLogout);
-    userMenu->addAction(statsAction);
-    userMenu->addSeparator();
-    userMenu->addAction(logoutAction);
-}
 
 void MainWindow::setupConnections()
 {
+    // Botones del .ui
+    connect(ui->btnStart,    &QPushButton::clicked, this, &MainWindow::onStartGame);
+    connect(ui->btnPrev,     &QPushButton::clicked, this, &MainWindow::onPreviousMove);
+    connect(ui->btnNext,     &QPushButton::clicked, this, &MainWindow::onNextMove);
+    connect(ui->btnEnd,      &QPushButton::clicked, this, &MainWindow::onEndGame);
+    connect(ui->btnPlay,     &QPushButton::clicked, this, &MainWindow::onPlayPause);
+    connect(ui->openButton,  &QPushButton::clicked, this, &MainWindow::onOpenPGN);
+    connect(ui->exportButton,&QPushButton::clicked, this, &MainWindow::onExportPDF);
+
+    // Menú Usuario
+    connect(ui->actionEstadisticas, &QAction::triggered, this, &MainWindow::onShowStatistics);
+    connect(ui->actionCerrarSesion, &QAction::triggered, this, &MainWindow::onLogout);
+
     // GameManager → UI
     connect(gameManager, &GameManager::boardUpdated,  this, &MainWindow::onBoardUpdated);
     connect(gameManager, &GameManager::moveNavigated, this, &MainWindow::onMoveNavigated);

@@ -10,40 +10,254 @@
     <height>800</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>1200</width>
+    <height>800</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Chess Insight AI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="mainLayout">
+    <property name="spacing">
+     <number>8</number>
+    </property>
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
     <item>
-     <widget class="QWidget" name="leftPanel" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>150</width>
-        <height>0</height>
-       </size>
+     <layout class="QVBoxLayout" name="leftLayout">
+      <property name="spacing">
+       <number>4</number>
       </property>
-     </widget>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="BoardWidget" name="boardWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>1</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">border-image: url(:/board.svg) 0 0 0 0;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="CapturedPiecesWidget" name="capturedPiecesWidget" native="true">
+        <property name="styleSheet">
+         <string notr="true">background-color: #2b2b2b;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
-     <widget class="QWidget" name="boardPanel" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>500</width>
-        <height>500</height>
-       </size>
+     <layout class="QVBoxLayout" name="centerLayout">
+      <property name="spacing">
+       <number>6</number>
       </property>
-     </widget>
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="movesLabel">
+        <property name="styleSheet">
+         <string notr="true">color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;</string>
+        </property>
+        <property name="text">
+         <string>MOVIMIENTOS</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="MoveListWidget" name="moveListWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>1</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #1e1e1e;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="navLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="btnStart">
+          <property name="toolTip">
+           <string>Inicio (Home)</string>
+          </property>
+          <property name="text">
+           <string>|&lt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnPrev">
+          <property name="toolTip">
+           <string>Jugada anterior (←)</string>
+          </property>
+          <property name="text">
+           <string>&lt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnNext">
+          <property name="toolTip">
+           <string>Jugada siguiente (→)</string>
+          </property>
+          <property name="text">
+           <string>&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnEnd">
+          <property name="toolTip">
+           <string>Final (End)</string>
+          </property>
+          <property name="text">
+           <string>&gt;|</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnPlay">
+        <property name="text">
+         <string>▶  Reproducir</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="openButton">
+        <property name="text">
+         <string>Abrir PGN</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="exportButton">
+        <property name="text">
+         <string>Exportar PDF</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
-     <widget class="QWidget" name="rightPanel" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>250</width>
-        <height>0</height>
-       </size>
+     <layout class="QVBoxLayout" name="rightLayout">
+      <property name="spacing">
+       <number>6</number>
       </property>
-     </widget>
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="analysisLabel">
+        <property name="styleSheet">
+         <string notr="true">color: #7a7a7a; font-size: 10px; font-weight: bold; letter-spacing: 1px;</string>
+        </property>
+        <property name="text">
+         <string>ANÁLISIS</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="analysisSplit">
+        <property name="spacing">
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="EvaluationBarWidget" name="evaluationBarWidget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>36</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>36</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:1 #1a1a1a);</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="AnalysisSidebarWidget" name="analysisSidebar" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #1e1e1e;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -53,12 +267,58 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuUsuario">
+    <property name="title">
+     <string>Usuario</string>
+    </property>
+    <addaction name="actionEstadisticas"/>
+    <addaction name="separator"/>
+    <addaction name="actionCerrarSesion"/>
+   </widget>
+   <addaction name="menuUsuario"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionEstadisticas">
+   <property name="text">
+    <string>Estadísticas</string>
+   </property>
+  </action>
+  <action name="actionCerrarSesion">
+   <property name="text">
+    <string>Cerrar sesión</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BoardWidget</class>
+   <extends>QWidget</extends>
+   <header>boardwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CapturedPiecesWidget</class>
+   <extends>QWidget</extends>
+   <header>capturedpieceswidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MoveListWidget</class>
+   <extends>QWidget</extends>
+   <header>movelistwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>EvaluationBarWidget</class>
+   <extends>QWidget</extends>
+   <header>evaluationbarwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AnalysisSidebarWidget</class>
+   <extends>QWidget</extends>
+   <header>analysissidebar.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

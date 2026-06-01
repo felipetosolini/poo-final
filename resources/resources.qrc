@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>styles.qss</file>
+        <file>board.svg</file>
         <file>pieces/wP.svg</file>
         <file>pieces/wN.svg</file>
         <file>pieces/wB.svg</file>
