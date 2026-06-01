@@ -39,29 +39,19 @@ signals:
     void explanationReady(int moveIndex, const QString& explanation);
     void requestFailed(int moveIndex, const QString& error);
 
-private slots:
-    void onReplyFinished(QNetworkReply *reply);
-
 private:
     QNetworkAccessManager *m_manager;
 
-    // Estado del request en curso (para retry en caso de 429)
-    int                m_pendingMoveIndex   = -1;
-    int                m_retryCount         = 0;
-    QString            m_lastFen;
-    QString            m_lastPlayedMove;
-    QString            m_lastBestMove;
-    int                m_lastEvalBefore     = 0;
-    int                m_lastEvalAfter      = 0;
-    MoveClassification m_lastClassification = MoveClassification::Good;
-
+    // retryCount = 0 en el primer intento, 1 en el reintento por 429.
+    // Cada request lleva su propio contexto capturado en la lambda.
     void sendRequest(int moveIndex,
                      const QString& fen,
                      const QString& playedMove,
                      const QString& bestMove,
                      int evalBefore,
                      int evalAfter,
-                     MoveClassification classification);
+                     MoveClassification classification,
+                     int retryCount = 0);
 
     QString buildPrompt(const QString& fen,
                         const QString& playedMove,
