@@ -131,6 +131,8 @@ void AnalysisService::onPositionDone()
     ma.fen        = m_currentFen;
     ma.bestMove   = m_bestMove;
     ma.pv         = m_pv;
+    if (idx < static_cast<int>(m_moves.size()))
+        ma.playedMove = m_moves[idx].getAlgebraic();
 
     // Si hay un resultado previo, podemos calcular su delta ahora:
     // delta = evalBefore_actual - evalAfter_anterior (desde perspectiva del jugador)
@@ -154,6 +156,7 @@ void AnalysisService::onPositionDone()
         }
         prev.delta = qMax(0, delta);
         prev.classification = classify(prev.delta);
+        emit moveAnalyzed(prev.moveIndex, prev);
     }
 
     m_results.append(ma);
