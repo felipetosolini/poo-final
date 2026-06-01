@@ -129,6 +129,8 @@ void AnalysisService::onPositionDone()
     ma.evalBefore = m_bestEval;
     ma.bestMove   = m_bestMove;
     ma.pv         = m_pv;
+    if (idx < static_cast<int>(m_moves.size()))
+        ma.playedMove = m_moves[idx].getAlgebraic();
 
     // Si hay un resultado previo, podemos calcular su delta ahora:
     // delta = evalBefore_actual - evalAfter_anterior (desde perspectiva del jugador)

@@ -183,6 +183,51 @@
         </property>
        </widget>
       </item>
+      <item>
+       <spacer name="logoutSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>8</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="logoutButton">
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #3a2020;
+    color: #e07070;
+    border: 1px solid #5a3030;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-weight: bold;
+    min-height: 28px;
+}
+QPushButton:hover {
+    background-color: #4a2828;
+    border-color: #c05050;
+    color: #f08080;
+}
+QPushButton:pressed {
+    background-color: #2e1818;
+}</string>
+        </property>
+        <property name="text">
+         <string>Cerrar sesión</string>
+        </property>
+        <property name="toolTip">
+         <string>Cerrar sesión y volver al login</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

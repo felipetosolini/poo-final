@@ -7,16 +7,44 @@
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QProcessEnvironment>
+#include <QFile>
+#include <QTextStream>
+#include <QCoreApplication>
+
+static QString loadKeyFromEnvFile()
+{
+    // Busca backend/.env relativo al ejecutable
+    // build/Desktop_Qt_.../debug/ → ../../.. → poo-final/
+    const QStringList candidates = {
+        QCoreApplication::applicationDirPath() + "/../../../backend/.env",
+        QCoreApplication::applicationDirPath() + "/../../backend/.env",
+        QCoreApplication::applicationDirPath() + "/../backend/.env",
+        QCoreApplication::applicationDirPath() + "/backend/.env",
+    };
+    for (const QString& path : candidates) {
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            continue;
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            const QString line = in.readLine().trimmed();
+            if (line.startsWith("OPENAI_API_KEY="))
+                return line.mid(QString("OPENAI_API_KEY=").length()).trimmed();
+        }
+    }
+    return {};
+}
 
 AIExplanationService::AIExplanationService(QObject *parent)
     : QObject(parent)
     , m_manager(new QNetworkAccessManager(this))
 {
-    // Cargar la API key desde variable de entorno si no está configurada todavía
-    if (Config::OPENAI_API_KEY.isEmpty()) {
+    if (Config::OPENAI_API_KEY.isEmpty())
         Config::OPENAI_API_KEY =
             QProcessEnvironment::systemEnvironment().value("OPENAI_API_KEY");
-    }
+
+    if (Config::OPENAI_API_KEY.isEmpty())
+        Config::OPENAI_API_KEY = loadKeyFromEnvFile();
 
     connect(m_manager, &QNetworkAccessManager::finished,
             this,      &AIExplanationService::onReplyFinished);

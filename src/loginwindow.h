@@ -1,14 +1,15 @@
 #pragma once
 
 #include <QWidget>
-#include <QLineEdit>
-#include <QPushButton>
+
+namespace Ui { class LoginWindow; }
 
 class LoginWindow : public QWidget {
     Q_OBJECT
 
 public:
     explicit LoginWindow(QWidget *parent = nullptr);
+    ~LoginWindow();
 
 signals:
     void loginRequested(const QString& username, const QString& password);
@@ -19,8 +20,5 @@ private slots:
     void onRegisterClicked();
 
 private:
-    QLineEdit *usernameEdit;
-    QLineEdit *passwordEdit;
-    QPushButton *loginButton;
-    QPushButton *registerButton;
+    Ui::LoginWindow *ui;
 };

@@ -38,10 +38,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnPlay->setObjectName("secondaryButton");
     ui->exportButton->setObjectName("secondaryButton");
 
-    // ObjectNames de paneles usados por estilos
-    ui->centerPanel->setObjectName("sidePanel");
-    ui->rightPanel->setObjectName("sidePanel");
-
     // Widgets no-UI
     gameManager    = new GameManager(this);
     loginWindow    = new LoginWindow(this);
@@ -95,7 +91,8 @@ void MainWindow::setupConnections()
     connect(ui->btnEnd,      &QPushButton::clicked, this, &MainWindow::onEndGame);
     connect(ui->btnPlay,     &QPushButton::clicked, this, &MainWindow::onPlayPause);
     connect(ui->openButton,  &QPushButton::clicked, this, &MainWindow::onOpenPGN);
-    connect(ui->exportButton,&QPushButton::clicked, this, &MainWindow::onExportPDF);
+    connect(ui->exportButton, &QPushButton::clicked, this, &MainWindow::onExportPDF);
+    connect(ui->logoutButton, &QPushButton::clicked, this, &MainWindow::onLogout);
 
     // Menú Usuario
     connect(ui->actionEstadisticas, &QAction::triggered, this, &MainWindow::onShowStatistics);
@@ -130,6 +127,10 @@ void MainWindow::setupConnections()
     // Área 5 — IA
     connect(aiExplanationService, &AIExplanationService::explanationReady,
             this,                 &MainWindow::onAIExplanationReady);
+    connect(aiExplanationService, &AIExplanationService::requestFailed,
+            this, [this](int, const QString& error) {
+                analysisSidebar->setAIExplanation("No se pudo obtener la explicación:\n" + error);
+            });
 
     // Área 5 — Estadísticas
     connect(statisticsService, &StatisticsService::historyLoaded,
@@ -511,4 +512,16 @@ void MainWindow::showMoveAnalysis(int index)
         text += "\n\n" + m_analysisSummary;
 
     analysisSidebar->setEngineAnalysis(text);
+
+    analysisSidebar->setAIExplanation("Solicitando explicación a la IA...");
+    if (index < static_cast<int>(gameBoardStates.size())) {
+        aiExplanationService->requestExplanation(
+            index,
+            gameBoardStates[index].toFen(),
+            ma.playedMove,
+            ma.bestMove,
+            ma.evalBefore,
+            ma.evalAfter,
+            ma.classification);
+    }
 }

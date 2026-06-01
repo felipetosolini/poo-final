@@ -1,14 +1,15 @@
 #pragma once
 
 #include <QWidget>
-#include <QLineEdit>
-#include <QPushButton>
+
+namespace Ui { class RegisterWindow; }
 
 class RegisterWindow : public QWidget {
     Q_OBJECT
 
 public:
     explicit RegisterWindow(QWidget *parent = nullptr);
+    ~RegisterWindow();
 
 signals:
     void registerRequested(const QString& username, const QString& email, const QString& password);
@@ -20,10 +21,5 @@ private slots:
     bool validateInputs();
 
 private:
-    QLineEdit *usernameEdit;
-    QLineEdit *emailEdit;
-    QLineEdit *passwordEdit;
-    QLineEdit *confirmPasswordEdit;
-    QPushButton *registerButton;
-    QPushButton *backButton;
+    Ui::RegisterWindow *ui;
 };
