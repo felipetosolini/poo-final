@@ -599,4 +599,17 @@ void MainWindow::showMoveAnalysis(int index)
         text += "\n\n" + m_analysisSummary;
 
     analysisSidebar->setEngineAnalysis(text);
+
+    // Solicitar explicación de IA solo para movimientos con error o peor
+    if (ma.classification >= MoveClassification::Inaccuracy) {
+        const QString fen = ma.fen.isEmpty() ? gameManager->getCurrentBoard().toFen() : ma.fen;
+        aiExplanationService->requestExplanation(
+            index, fen, ma.playedMove, ma.bestMove,
+            ma.evalBefore, ma.evalAfter, ma.classification);
+    } else {
+        analysisSidebar->setAIExplanation(
+            QString("Jugada %1 — %2. Buen movimiento.")
+                .arg(index + 1)
+                .arg(MoveAnalysis::classificationToString(ma.classification)));
+    }
 }

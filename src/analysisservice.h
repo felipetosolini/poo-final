@@ -64,6 +64,7 @@ private:
 
     int m_bestEval = 0;
     QString m_bestMove;
+    QString m_currentFen;
     QStringList m_pv;
 
     QVector<MoveAnalysis> m_results;

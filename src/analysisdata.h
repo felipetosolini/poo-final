@@ -28,7 +28,8 @@ inline QString classificationToString(MoveClassification c)
 
 inline MoveClassification classifyMove(int deltaCp)
 {
-    if (deltaCp <= 10)  return MoveClassification::Best;
+    if (deltaCp == 0)   return MoveClassification::Best;
+    if (deltaCp <= 10)  return MoveClassification::Excellent;
     if (deltaCp <= 25)  return MoveClassification::Good;
     if (deltaCp <= 100) return MoveClassification::Inaccuracy;
     if (deltaCp <= 300) return MoveClassification::Mistake;
@@ -42,6 +43,7 @@ struct MoveAnalysis {
     int    delta      = 0;   // pérdida vs mejor jugada (siempre >= 0)
     bool   isMate     = false;
     int    mateIn     = 0;
+    QString fen;             // FEN de la posición ANTES del movimiento
     QString bestMove;
     QString playedMove;
     QStringList pv;
