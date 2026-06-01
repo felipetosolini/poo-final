@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QHash>
 #include <QShortcut>
 #include <QTimer>
 #include <QVector>
@@ -118,7 +119,8 @@ private:
     bool     isPlaying     = false;
     int      playbackSpeed = 1000;
     QTimer  *playTimer     = nullptr;
-    QString  m_analysisSummary;
+    QString           m_analysisSummary;
+    QHash<int,QString> m_aiExplanationCache;
 
     void setupUI();
     void setupConnections();
