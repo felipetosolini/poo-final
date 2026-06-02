@@ -259,6 +259,7 @@ void MainWindow::onOpenPGN()
     gameBoardStates = game.getBoardStates();
     m_currentAnalysis.clear();
     m_analysisSummary.clear();
+    m_aiExplanationCache.clear();
     analysisSidebar->clear();
     boardWidget->setInteractive(false);
     isPlaying = false;
@@ -375,8 +376,9 @@ void MainWindow::showMainWindow()
 
 // ── Área 5 — IA, estadísticas y PDF ─────────────────────────────────────────
 
-void MainWindow::onAIExplanationReady(int /*moveIndex*/, const QString& explanation)
+void MainWindow::onAIExplanationReady(int moveIndex, const QString& explanation)
 {
+    m_aiExplanationCache[moveIndex] = explanation;
     analysisSidebar->setAIExplanation(explanation);
 }
 
@@ -513,15 +515,20 @@ void MainWindow::showMoveAnalysis(int index)
 
     analysisSidebar->setEngineAnalysis(text);
 
-    analysisSidebar->setAIExplanation("Solicitando explicación a la IA...");
-    if (index < static_cast<int>(gameBoardStates.size())) {
-        aiExplanationService->requestExplanation(
-            index,
-            gameBoardStates[index].toFen(),
-            ma.playedMove,
-            ma.bestMove,
-            ma.evalBefore,
-            ma.evalAfter,
-            ma.classification);
+    // Solicitar explicación de IA solo para movimientos con error o peor
+    if (ma.classification >= MoveClassification::Inaccuracy) {
+        if (m_aiExplanationCache.contains(index)) {
+            analysisSidebar->setAIExplanation(m_aiExplanationCache[index]);
+        } else {
+            const QString fen = ma.fen.isEmpty() ? gameManager->getCurrentBoard().toFen() : ma.fen;
+            aiExplanationService->requestExplanation(
+                index, fen, ma.playedMove, ma.bestMove,
+                ma.evalBefore, ma.evalAfter, ma.classification);
+        }
+    } else {
+        analysisSidebar->setAIExplanation(
+            QString("Jugada %1 — %2. Buen movimiento.")
+                .arg(index + 1)
+                .arg(MoveAnalysis::classificationToString(ma.classification)));
     }
 }

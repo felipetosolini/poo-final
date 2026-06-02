@@ -46,8 +46,6 @@ AIExplanationService::AIExplanationService(QObject *parent)
     if (Config::OPENAI_API_KEY.isEmpty())
         Config::OPENAI_API_KEY = loadKeyFromEnvFile();
 
-    connect(m_manager, &QNetworkAccessManager::finished,
-            this,      &AIExplanationService::onReplyFinished);
 }
 
 void AIExplanationService::requestExplanation(int moveIndex,
@@ -58,15 +56,6 @@ void AIExplanationService::requestExplanation(int moveIndex,
                                                int evalAfter,
                                                MoveClassification classification)
 {
-    m_retryCount         = 0;
-    m_pendingMoveIndex   = moveIndex;
-    m_lastFen            = fen;
-    m_lastPlayedMove     = playedMove;
-    m_lastBestMove       = bestMove;
-    m_lastEvalBefore     = evalBefore;
-    m_lastEvalAfter      = evalAfter;
-    m_lastClassification = classification;
-
     sendRequest(moveIndex, fen, playedMove, bestMove, evalBefore, evalAfter, classification);
 }
 
@@ -76,7 +65,8 @@ void AIExplanationService::sendRequest(int moveIndex,
                                         const QString& bestMove,
                                         int evalBefore,
                                         int evalAfter,
-                                        MoveClassification classification)
+                                        MoveClassification classification,
+                                        int retryCount)
 {
     if (Config::OPENAI_API_KEY.isEmpty()) {
         emit requestFailed(moveIndex, "OpenAI API key not configured. "
@@ -99,50 +89,56 @@ void AIExplanationService::sendRequest(int moveIndex,
     body["max_tokens"] = 200;
     body["messages"]   = QJsonArray{ messageObj };
 
-    m_manager->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
-}
+    QNetworkReply* reply = m_manager->post(
+        request, QJsonDocument(body).toJson(QJsonDocument::Compact));
 
-void AIExplanationService::onReplyFinished(QNetworkReply *reply)
-{
-    reply->deleteLater();
+    // Cada reply lleva su propio contexto capturado en la lambda.
+    // No hay estado compartido, por lo que múltiples requests simultáneos
+    // no se interfieren entre sí.
+    connect(reply, &QNetworkReply::finished, this,
+            [this, reply, moveIndex, fen, playedMove, bestMove,
+             evalBefore, evalAfter, classification, retryCount]() {
+        reply->deleteLater();
 
-    int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const int httpStatus =
+            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    // HTTP 429 — rate limit: reintentar una sola vez tras 2 segundos
-    if (httpStatus == 429 && m_retryCount < 1) {
-        ++m_retryCount;
-        QTimer::singleShot(2000, this, [this]() {
-            sendRequest(m_pendingMoveIndex,
-                        m_lastFen, m_lastPlayedMove, m_lastBestMove,
-                        m_lastEvalBefore, m_lastEvalAfter, m_lastClassification);
-        });
-        return;
-    }
+        // HTTP 429 — rate limit: reintentar una sola vez tras 2 segundos
+        if (httpStatus == 429 && retryCount < 1) {
+            QTimer::singleShot(2000, this, [this, moveIndex, fen, playedMove,
+                                             bestMove, evalBefore, evalAfter,
+                                             classification]() {
+                sendRequest(moveIndex, fen, playedMove, bestMove,
+                            evalBefore, evalAfter, classification, 1);
+            });
+            return;
+        }
 
-    if (reply->error() != QNetworkReply::NoError) {
-        emit requestFailed(m_pendingMoveIndex, reply->errorString());
-        return;
-    }
+        if (reply->error() != QNetworkReply::NoError) {
+            emit requestFailed(moveIndex, reply->errorString());
+            return;
+        }
 
-    QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-    if (doc.isNull() || !doc.isObject()) {
-        emit requestFailed(m_pendingMoveIndex, "Invalid JSON response from OpenAI");
-        return;
-    }
+        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        if (doc.isNull() || !doc.isObject()) {
+            emit requestFailed(moveIndex, "Invalid JSON response from OpenAI");
+            return;
+        }
 
-    const QString explanation = doc.object()
-                                    .value("choices").toArray()
-                                    .first().toObject()
-                                    .value("message").toObject()
-                                    .value("content").toString()
-                                    .trimmed();
+        const QString explanation = doc.object()
+                                        .value("choices").toArray()
+                                        .first().toObject()
+                                        .value("message").toObject()
+                                        .value("content").toString()
+                                        .trimmed();
 
-    if (explanation.isEmpty()) {
-        emit requestFailed(m_pendingMoveIndex, "Empty response from OpenAI");
-        return;
-    }
+        if (explanation.isEmpty()) {
+            emit requestFailed(moveIndex, "Empty response from OpenAI");
+            return;
+        }
 
-    emit explanationReady(m_pendingMoveIndex, explanation);
+        emit explanationReady(moveIndex, explanation);
+    });
 }
 
 QString AIExplanationService::buildPrompt(const QString& fen,

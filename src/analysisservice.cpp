@@ -89,6 +89,7 @@ void AnalysisService::analyzeNext()
     m_pv.clear();
 
     QString fen = m_boards[m_currentIndex].toFen();
+    m_currentFen = fen;
 
     // Validar que el FEN tenga ambos reyes antes de enviarlo a Stockfish.
     // Un FEN sin rey crashea el proceso de Stockfish.
@@ -127,6 +128,7 @@ void AnalysisService::onPositionDone()
     MoveAnalysis ma;
     ma.moveIndex  = idx;
     ma.evalBefore = m_bestEval;
+    ma.fen        = m_currentFen;
     ma.bestMove   = m_bestMove;
     ma.pv         = m_pv;
     if (idx < static_cast<int>(m_moves.size()))
@@ -154,6 +156,7 @@ void AnalysisService::onPositionDone()
         }
         prev.delta = qMax(0, delta);
         prev.classification = classify(prev.delta);
+        emit moveAnalyzed(prev.moveIndex, prev);
     }
 
     m_results.append(ma);
@@ -167,7 +170,8 @@ void AnalysisService::onPositionDone()
 
 MoveClassification AnalysisService::classify(int delta) const
 {
-    if (delta <= 10)  return MoveClassification::Best;
+    if (delta == 0)   return MoveClassification::Best;
+    if (delta <= 10)  return MoveClassification::Excellent;
     if (delta <= 25)  return MoveClassification::Good;
     if (delta <= 100) return MoveClassification::Inaccuracy;
     if (delta <= 300) return MoveClassification::Mistake;
