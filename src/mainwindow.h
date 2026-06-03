@@ -69,6 +69,7 @@ private slots:
 
     // Área 5 — IA y estadísticas
     void onAIExplanationReady(int moveIndex, const QString& explanation);
+    void onGameSummaryReady(const QString& summary);
     void onShowStatistics();
     void onMatchSelectedFromStats(int matchId);
 
@@ -118,6 +119,7 @@ private:
     // State
     bool     isPlaying     = false;
     int      playbackSpeed = 1000;
+    QString  m_gameSummary;
     QTimer  *playTimer     = nullptr;
     QString           m_analysisSummary;
     QHash<int,QString> m_aiExplanationCache;

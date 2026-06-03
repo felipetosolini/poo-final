@@ -3,6 +3,7 @@
 #include <QString>
 #include <QVector>
 #include <QPainter>
+#include <QPrinter>
 #include <QRect>
 #include <QColor>
 #include "analysisdata.h"
@@ -14,7 +15,7 @@
 // Secciones generadas:
 //   1. Datos de la partida (jugadores, fecha, resultado, apertura)
 //   2. Gráfico de evaluación centipawns a lo largo de la partida
-//   3. Tabla de movimientos con clasificación de errores
+//   3. Tabla de movimientos con clasificación de errores (una fila por jugada)
 class PdfExporter
 {
 public:
@@ -28,19 +29,25 @@ public:
     static bool exportToPdf(const QString& filePath,
                             const chess::GameMetadata& metadata,
                             const std::vector<chess::Move>& moves,
-                            const QVector<MoveAnalysis>& analysis);
+                            const QVector<MoveAnalysis>& analysis,
+                            const QString& gameSummary = QString());
 
 private:
-    // Helpers de renderizado
-    static void drawHeader(QPainter& p, const QRect& pageRect,
-                           const chess::GameMetadata& meta);
+    // Helpers de renderizado — cada uno devuelve el nuevo Y tras dibujar
+    static int drawHeader(QPainter& p, const QRect& contentRect,
+                          const chess::GameMetadata& meta, int startY);
 
     static void drawEvalChart(QPainter& p, const QRect& rect,
-                               const QVector<MoveAnalysis>& analysis);
+                              const QVector<MoveAnalysis>& analysis);
 
-    static int  drawMoveTable(QPainter& p, int startY, const QRect& pageRect,
-                               const std::vector<chess::Move>& moves,
-                               const QVector<MoveAnalysis>& analysis);
+    static int drawMoveTable(QPainter& p, QPrinter& printer, int startY,
+                             const QRect& contentRect,
+                             const std::vector<chess::Move>& moves,
+                             const QVector<MoveAnalysis>& analysis);
 
     static QColor colorForClassification(MoveClassification c);
+    static bool   isWeakMove(MoveClassification c);
+    static void   drawSummarySection(QPainter& p, QPrinter& printer, int startY,
+                                     const QRect& contentRect,
+                                     const QString& summary);
 };

@@ -4,13 +4,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include "analysisdata.h"
+#include "chess/game.h"
 
 // Servicio que consulta la API de OpenAI para generar explicaciones en lenguaje
 // natural de movimientos clasificados por Stockfish.
-//
-// Uso:
-//   service->requestExplanation(moveIndex, fen, played, best, evalBefore, evalAfter, classification)
-//   // luego conectar explanationReady(int, QString) para recibir la respuesta
 class AIExplanationService : public QObject
 {
     Q_OBJECT
@@ -18,15 +15,7 @@ class AIExplanationService : public QObject
 public:
     explicit AIExplanationService(QObject *parent = nullptr);
 
-    // Solicita explicación para un movimiento.
-    // Parámetros:
-    //   moveIndex      — índice del movimiento en la partida (0-based)
-    //   fen            — posición FEN antes del movimiento
-    //   playedMove     — jugada realizada (notación algebraica, ej: "Nf3")
-    //   bestMove       — mejor jugada según Stockfish (notación UCI, ej: "g1f3")
-    //   evalBefore     — evaluación antes del movimiento (centipawns)
-    //   evalAfter      — evaluación después del movimiento (centipawns)
-    //   classification — clasificación del movimiento
+    // Solicita explicación para un movimiento individual.
     void requestExplanation(int moveIndex,
                             const QString& fen,
                             const QString& playedMove,
@@ -35,15 +24,20 @@ public:
                             int evalAfter,
                             MoveClassification classification);
 
+    // Solicita un resumen global de la partida.
+    // Emite gameSummaryReady(QString) cuando está listo.
+    void requestGameSummary(const chess::GameMetadata& metadata,
+                            const QVector<MoveAnalysis>& analysis);
+
 signals:
     void explanationReady(int moveIndex, const QString& explanation);
     void requestFailed(int moveIndex, const QString& error);
+    void gameSummaryReady(const QString& summary);
+    void gameSummaryFailed(const QString& error);
 
 private:
     QNetworkAccessManager *m_manager;
 
-    // retryCount = 0 en el primer intento, 1 en el reintento por 429.
-    // Cada request lleva su propio contexto capturado en la lambda.
     void sendRequest(int moveIndex,
                      const QString& fen,
                      const QString& playedMove,
@@ -59,4 +53,7 @@ private:
                         int evalBefore,
                         int evalAfter,
                         MoveClassification classification) const;
+
+    QString buildSummaryPrompt(const chess::GameMetadata& metadata,
+                               const QVector<MoveAnalysis>& analysis) const;
 };

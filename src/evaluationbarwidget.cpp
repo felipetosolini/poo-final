@@ -34,35 +34,48 @@ void EvaluationBarWidget::paintEvent(QPaintEvent*)
 
     const int labelH = 20;
     const int barX   = 0;
-    const int barY   = labelH;
+    const int barY   = 0;
     const int barW   = width();
-    const int barH   = height() - labelH * 2;
+    const int barH   = height();
 
     // Fondo negro (ventaja negras)
     p.fillRect(barX, barY, barW, barH, QColor(40, 40, 40));
 
-    // Parte blanca proporcional a m_evalNorm
-    int whiteH = static_cast<int>(m_evalNorm * barH);
-    p.fillRect(barX, barY + (barH - whiteH), barW, whiteH, Qt::white);
+    // Parte blanca proporcional a m_evalNorm (crece desde abajo)
+    const int whiteH  = static_cast<int>(m_evalNorm * barH);
+    const int whiteY  = barY + barH - whiteH;
+    p.fillRect(barX, whiteY, barW, whiteH, Qt::white);
 
-    // Línea central
+    // Línea central (igualdad)
+    const int midY = barY + barH / 2;
     p.setPen(QPen(QColor(150, 150, 150), 1, Qt::DashLine));
-    p.drawLine(barX, barY + barH / 2, barX + barW, barY + barH / 2);
+    p.drawLine(barX, midY, barX + barW, midY);
 
     // Borde
     p.setPen(QPen(Qt::black, 1));
     p.drawRect(barX, barY, barW - 1, barH - 1);
 
-    // Etiqueta de evaluación
-    QString label = evalLabel();
-    QFont font("Monospace", 8, QFont::Bold);
-    p.setFont(font);
+    // ── Etiqueta ──────────────────────────────────────────────────────────
+    // Cuando blancas ganan: etiqueta en la sección blanca (abajo), texto negro
+    // Cuando negras ganan:  etiqueta en la sección negra (arriba), texto blanco
+    const QString label      = evalLabel();
+    QFont         labelFont("Monospace", 8, QFont::Bold);
+    p.setFont(labelFont);
 
-    // Color de texto contrasta con el fondo donde se dibuja
-    bool textInWhite = (m_evalNorm > 0.5f);
-    p.setPen(textInWhite ? Qt::black : Qt::white);
-    p.drawText(QRect(barX, barY + barH - labelH, barW, labelH),
-               Qt::AlignCenter, label);
+    const bool whiteWinning = (m_evalNorm >= 0.5f);
+    if (whiteWinning) {
+        // Sección blanca está abajo — posicionar etiqueta en la parte inferior
+        const int labelY = barY + barH - labelH - 2;
+        p.setPen(Qt::black);
+        p.drawText(QRect(barX + 1, labelY, barW - 2, labelH),
+                   Qt::AlignCenter, label);
+    } else {
+        // Sección negra está arriba — posicionar etiqueta en la parte superior
+        const int labelY = barY + 2;
+        p.setPen(Qt::white);
+        p.drawText(QRect(barX + 1, labelY, barW - 2, labelH),
+                   Qt::AlignCenter, label);
+    }
 }
 
 float EvaluationBarWidget::sigmoid(int cp)
@@ -74,10 +87,11 @@ float EvaluationBarWidget::sigmoid(int cp)
 QString EvaluationBarWidget::evalLabel() const
 {
     if (m_isMate) {
+        // M3 = blancas dan mate en 3, -M3 = negras dan mate en 3
         return m_mateIn > 0 ? QString("M%1").arg(m_mateIn)
-                            : QString("M%1").arg(m_mateIn); // e.g. "M3" o "M-3"
+                            : QString("-M%1").arg(qAbs(m_mateIn));
     }
-    double pawns = m_rawCp / 100.0;
+    const double pawns = m_rawCp / 100.0;
     if (pawns >= 0)
         return QString("+%1").arg(pawns, 0, 'f', 1);
     return QString("%1").arg(pawns, 0, 'f', 1);

@@ -129,7 +129,14 @@ void MainWindow::setupConnections()
             this,                 &MainWindow::onAIExplanationReady);
     connect(aiExplanationService, &AIExplanationService::requestFailed,
             this, [this](int, const QString& error) {
-                analysisSidebar->setAIExplanation("No se pudo obtener la explicación:\n" + error);
+                analysisSidebar->setAIExplanation("No se pudo obtener la explicacion:\n" + error);
+            });
+    connect(aiExplanationService, &AIExplanationService::gameSummaryReady,
+            this,                 &MainWindow::onGameSummaryReady);
+    connect(aiExplanationService, &AIExplanationService::gameSummaryFailed,
+            this, [this](const QString& error) {
+                Q_UNUSED(error)
+                m_gameSummary.clear();
             });
 
     // Área 5 — Estadísticas
@@ -284,7 +291,8 @@ void MainWindow::onExportPDF()
         fileName,
         gameManager->getMetadata(),
         gameManager->getMoves(),
-        m_currentAnalysis);
+        m_currentAnalysis,
+        m_gameSummary);
 
     if (ok) {
         QMessageBox::information(this, "PDF exportado",
@@ -380,6 +388,11 @@ void MainWindow::onAIExplanationReady(int moveIndex, const QString& explanation)
 {
     m_aiExplanationCache[moveIndex] = explanation;
     analysisSidebar->setAIExplanation(explanation);
+}
+
+void MainWindow::onGameSummaryReady(const QString& summary)
+{
+    m_gameSummary = summary;
 }
 
 void MainWindow::onShowStatistics()
@@ -484,6 +497,10 @@ void MainWindow::onAnalysisComplete(QVector<MoveAnalysis> results, AccuracyScore
 
     m_analysisSummary = summary;
     showMoveAnalysis(gameManager->getCurrentMoveIndex());
+
+    // Solicitar resumen de IA en segundo plano para el PDF
+    m_gameSummary.clear();
+    aiExplanationService->requestGameSummary(gameManager->getMetadata(), results);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

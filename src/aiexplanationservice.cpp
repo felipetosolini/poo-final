@@ -1,5 +1,6 @@
 #include "aiexplanationservice.h"
 #include "config.h"
+#include "chess/game.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -162,10 +163,130 @@ QString AIExplanationService::buildPrompt(const QString& fen,
         "Evaluation after:  %6 pawns\n\n"
         "Focus on the strategic or tactical reason for the classification. "
         "Keep the explanation concise and beginner-friendly."
+        "*ALWAYS* answer in Spanish."
     ).arg(classStr,
           fen,
           playedMove,
           bestMove,
           QString::number(evalBeforePawns, 'f', 2),
           QString::number(evalAfterPawns,  'f', 2));
+}
+
+// ---------------------------------------------------------------------------
+// requestGameSummary — resumen global de la partida
+// ---------------------------------------------------------------------------
+void AIExplanationService::requestGameSummary(const chess::GameMetadata& metadata,
+                                               const QVector<MoveAnalysis>& analysis)
+{
+    if (Config::OPENAI_API_KEY.isEmpty()) {
+        emit gameSummaryFailed("OpenAI API key not configured.");
+        return;
+    }
+
+    QNetworkRequest request(QUrl("https://api.openai.com/v1/chat/completions"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization",
+                         ("Bearer " + Config::OPENAI_API_KEY).toUtf8());
+
+    QJsonObject messageObj;
+    messageObj["role"]    = "user";
+    messageObj["content"] = buildSummaryPrompt(metadata, analysis);
+
+    QJsonObject body;
+    body["model"]      = "gpt-4o-mini";
+    body["max_tokens"] = 400;
+    body["messages"]   = QJsonArray{ messageObj };
+
+    QNetworkReply* reply = m_manager->post(
+        request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        const int httpStatus =
+            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        if (httpStatus == 429) {
+            QTimer::singleShot(2000, this, [this]() {
+                emit gameSummaryFailed("Rate limit alcanzado. Intentalo de nuevo en unos segundos.");
+            });
+            return;
+        }
+
+        if (reply->error() != QNetworkReply::NoError) {
+            emit gameSummaryFailed(reply->errorString());
+            return;
+        }
+
+        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        if (doc.isNull() || !doc.isObject()) {
+            emit gameSummaryFailed("Respuesta JSON invalida de OpenAI.");
+            return;
+        }
+
+        const QString summary = doc.object()
+                                    .value("choices").toArray()
+                                    .first().toObject()
+                                    .value("message").toObject()
+                                    .value("content").toString()
+                                    .trimmed();
+
+        if (summary.isEmpty()) {
+            emit gameSummaryFailed("Respuesta vacia de OpenAI.");
+            return;
+        }
+
+        emit gameSummaryReady(summary);
+    });
+}
+
+QString AIExplanationService::buildSummaryPrompt(const chess::GameMetadata& metadata,
+                                                  const QVector<MoveAnalysis>& analysis) const
+{
+    int best = 0, good = 0, inaccuracy = 0, mistake = 0, blunder = 0;
+    for (const MoveAnalysis& ma : analysis) {
+        switch (ma.classification) {
+            case MoveClassification::Best:
+            case MoveClassification::Excellent: best++;        break;
+            case MoveClassification::Good:      good++;        break;
+            case MoveClassification::Inaccuracy:inaccuracy++;  break;
+            case MoveClassification::Mistake:   mistake++;     break;
+            case MoveClassification::Blunder:   blunder++;     break;
+        }
+    }
+
+    // Hasta 3 errores criticos (blunders y mistakes) para contexto
+    QString criticalMoves;
+    int shown = 0;
+    for (int i = 0; i < analysis.size() && shown < 3; ++i) {
+        const MoveAnalysis& ma = analysis[i];
+        if (ma.classification == MoveClassification::Blunder ||
+            ma.classification == MoveClassification::Mistake) {
+            const QString side = (i % 2 == 0) ? "Blancas" : "Negras";
+            criticalMoves += QString("  - Jugada %1 (%2): %3 jugo %4, mejor era %5 (delta %6cp)\n")
+                .arg(i / 2 + 1).arg(side)
+                .arg(classificationToString(ma.classification))
+                .arg(ma.playedMove).arg(ma.bestMove).arg(ma.delta);
+            ++shown;
+        }
+    }
+    if (criticalMoves.isEmpty()) criticalMoves = "  (ninguno destacado)\n";
+
+    return QString(
+        "Eres un entrenador de ajedrez. Escribe un resumen analitico de esta partida en 4-6 "
+        "oraciones, sin markdown, sin listas. Debe ser fluido, como si lo escribiera un entrenador "
+        "para su alumno. Incluye: evaluacion general del desempeno, errores mas graves cometidos, "
+        "en que fase de la partida ocurrieron los principales errores, y un consejo concreto de mejora.\n\n"
+        "Partida: %1 vs %2 (%3) - Resultado: %4\n"
+        "Total jugadas: %5\n"
+        "Estadisticas: %6 best/excellent, %7 good, %8 inaccuracy, %9 mistake, %10 blunder\n"
+        "Errores criticos:\n%11\n"
+        "Responde SIEMPRE en espanol."
+    ).arg(metadata.whiteName.isEmpty() ? "Blancas" : metadata.whiteName,
+          metadata.blackName.isEmpty()  ? "Negras"  : metadata.blackName,
+          metadata.date.isEmpty()       ? "fecha desconocida" : metadata.date,
+          metadata.result.isEmpty()     ? "?"        : metadata.result)
+     .arg(analysis.size())
+     .arg(best).arg(good).arg(inaccuracy).arg(mistake).arg(blunder)
+     .arg(criticalMoves);
 }
